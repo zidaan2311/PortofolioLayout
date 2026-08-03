@@ -14,11 +14,9 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     
-    <!-- Three.js Core -->
+    <!-- Three.js Core & Loaders -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <!-- OrbitControls (Untuk memutar 3D) -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    <!-- MTLLoader & OBJLoader -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/MTLLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
     
@@ -65,7 +63,7 @@
         
         /* Loading Overlay */
         #loading-overlay {
-            position: absolute; inset: 0; background: rgba(17, 17, 17, 0.8);
+            position: absolute; inset: 0; background: rgba(17, 17, 17, 0.9);
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             z-index: 40; color: #F59E0B; font-family: 'JetBrains Mono', monospace; font-size: 14px;
             opacity: 0; pointer-events: none; transition: opacity 0.3s;
@@ -99,15 +97,25 @@
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 bg-panel rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
                     
                     <!-- Viewer -->
-                    <div class="lg:col-span-8 relative bg-[#111] p-4 flex flex-col justify-center items-center min-h-[400px] md:min-h-[600px]">
+                    <div class="lg:col-span-8 relative bg-[#111] p-4 flex flex-col justify-center items-center min-h-[400px] md:min-h-[600px] overflow-hidden">
                         
-                        <div id="viewer-container" class="w-full h-full flex items-center justify-center overflow-hidden rounded-lg relative cursor-move">
+                        <!-- Pesan Error WebGL -->
+                        <div id="webgl-error" class="hidden absolute inset-0 z-50 bg-red-900/90 text-white flex-col items-center justify-center p-6 text-center">
+                            <i class="fas fa-exclamation-triangle text-5xl mb-4 text-copper"></i>
+                            <h3 class="text-2xl font-bold mb-2">3D Diblokir Oleh Browser</h3>
+                            <p class="mb-4">Fitur WebGL dimatikan oleh Brave Shields atau sistem Anda.</p>
+                            <p class="text-sm opacity-80 bg-black/30 p-3 rounded">
+                                <strong>SOLUSI BRAVE:</strong> Klik ikon Singa 🦁 di URL bar, lalu matikan "Shields are UP" menjadi DOWN. Refresh halaman ini.
+                            </p>
+                        </div>
+
+                        <div id="viewer-container" class="w-full h-full flex items-center justify-center rounded-lg relative cursor-move">
                             <div id="canvas-3d" class="w-full h-full absolute inset-0 z-10 transition-opacity duration-300"></div>
                             <img id="board-image" src="" alt="PCB View" class="w-full object-contain max-h-[600px] fade-img absolute inset-0 m-auto z-20 hidden bg-[#111]">
                             
                             <div id="loading-overlay" class="items-center">
-                                <i class="fas fa-circle-notch fa-spin text-3xl mb-3"></i>
-                                <span id="loading-text" class="text-center">Loading...</span>
+                                <i class="fas fa-circle-notch fa-spin text-4xl mb-4"></i>
+                                <span id="loading-text" class="text-center bg-black/50 px-4 py-2 rounded-lg mt-2">Menyiapkan 3D...</span>
                             </div>
                         </div>
 
@@ -159,28 +167,29 @@
             <h3 class="text-xl font-bold text-white mb-6 border-l-4 border-copper pl-4">Koleksi Desain Layout PCB</h3>
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Pemanas -->
                 <div onclick="selectBoard('pemanas')" class="bg-panel p-4 rounded-xl border border-white/5 hover:border-copper/50 transition-all cursor-pointer">
-                    <div class="h-32 bg-dark rounded-lg mb-4 overflow-hidden relative">
-                        <img src="pemanas-bot.png" onerror="this.src='https://placehold.co/400x300/171717/ef4444?text=Pemanas'" alt="Pemanas" class="w-full h-full object-cover">
-                    </div>
+                    <div class="h-32 bg-dark rounded-lg mb-4 overflow-hidden relative"><img src="pemanas-bot.png" onerror="this.src='https://placehold.co/400x300/171717/ef4444?text=Pemanas'" alt="Pemanas" class="w-full h-full object-cover"></div>
                     <h4 class="text-white font-bold mb-1">PCB Layar Pemanas</h4>
                 </div>
-
-                <!-- ATS -->
                 <div onclick="selectBoard('ats')" class="bg-panel p-4 rounded-xl border border-white/5 hover:border-copper/50 transition-all cursor-pointer">
-                    <div class="h-32 bg-dark rounded-lg mb-4 overflow-hidden relative">
-                        <img src="https://placehold.co/400x300/171717/F59E0B?text=PCB+ATS" alt="ATS" class="w-full h-full object-cover">
-                    </div>
+                    <div class="h-32 bg-dark rounded-lg mb-4 overflow-hidden relative"><img src="ats-3d.png" onerror="this.src='https://placehold.co/400x300/171717/F59E0B?text=ATS'" alt="ATS" class="w-full h-full object-cover"></div>
                     <h4 class="text-white font-bold mb-1">PCB ATS</h4>
                 </div>
-
-                <!-- Timbangan -->
                 <div onclick="selectBoard('timbangan')" class="bg-panel p-4 rounded-xl border border-white/5 hover:border-copper/50 transition-all cursor-pointer">
-                    <div class="h-32 bg-dark rounded-lg mb-4 overflow-hidden relative">
-                        <img src="https://placehold.co/400x300/171717/3b82f6?text=Timbangan" alt="Timbangan" class="w-full h-full object-cover">
-                    </div>
+                    <div class="h-32 bg-dark rounded-lg mb-4 overflow-hidden relative"><img src="timbangan-3d.png" onerror="this.src='https://placehold.co/400x300/171717/3b82f6?text=Timbangan'" alt="Timbangan" class="w-full h-full object-cover"></div>
                     <h4 class="text-white font-bold mb-1">PCB Timbangan Digital</h4>
+                </div>
+                <div onclick="selectBoard('rfid')" class="bg-panel p-4 rounded-xl border border-white/5 hover:border-copper/50 transition-all cursor-pointer">
+                    <div class="h-32 bg-dark rounded-lg mb-4 overflow-hidden relative"><img src="rfid-3d.png" onerror="this.src='https://placehold.co/400x300/171717/10b981?text=RFID'" alt="RFID" class="w-full h-full object-cover"></div>
+                    <h4 class="text-white font-bold mb-1">PCB RFID</h4>
+                </div>
+                <div onclick="selectBoard('meteran')" class="bg-panel p-4 rounded-xl border border-white/5 hover:border-copper/50 transition-all cursor-pointer">
+                    <div class="h-32 bg-dark rounded-lg mb-4 overflow-hidden relative"><img src="meteran-3d.png" onerror="this.src='https://placehold.co/400x300/171717/8b5cf6?text=Meteran+Air'" alt="Meteran" class="w-full h-full object-cover"></div>
+                    <h4 class="text-white font-bold mb-1">PCB Meteran Air</h4>
+                </div>
+                <div onclick="selectBoard('ledmeteran')" class="bg-panel p-4 rounded-xl border border-white/5 hover:border-copper/50 transition-all cursor-pointer">
+                    <div class="h-32 bg-dark rounded-lg mb-4 overflow-hidden relative"><img src="ledmeteran-3d.png" onerror="this.src='https://placehold.co/400x300/171717/14b8a6?text=LED+Meteran'" alt="LED Meteran" class="w-full h-full object-cover"></div>
+                    <h4 class="text-white font-bold mb-1">PCB LED Meteran Air</h4>
                 </div>
             </div>
         </section>
@@ -191,60 +200,87 @@
             'pemanas': {
                 type: 'HMI & Controller', title: 'PCB Layar Pemanas',
                 desc: 'Modul antarmuka layar (Display HMI) digabungkan dengan driver pengontrol elemen pemanas. Dilengkapi sirkuit isolasi optocoupler untuk keamanan dari tegangan tinggi.',
-                layers: '2-Layer', finish: 'HASL', trace: '10 mil / 10 mil', software: 'EasyEDA',
-                color: 0xef4444, // Merah
+                layers: '2-Layer', finish: 'HASL', trace: '10 mil / 10 mil', software: 'EasyEDA', color: 0xef4444, 
                 model3D: { obj: 'pemanas-3d.obj', mtl: 'pemanas-3d.mtl' },
-                images: {
-                    '3d': 'https://placehold.co/1000x700/222/ef4444?text=3D+View', 
-                    'top': 'https://placehold.co/1000x700/222/ef4444?text=Top+Layer', 
-                    'bottom': 'pemanas-bot.png',
-                    'schematic': 'pemanas-sch.png'
-                }
+                images: { '3d': 'pemanas-3d.png', 'top': 'pemanas-top.png', 'bottom': 'pemanas-bot.png', 'schematic': 'pemanas-sch.png' }
             },
             'ats': {
                 type: 'Power Management', title: 'PCB ATS (Auto Transfer Switch)',
-                desc: 'Sistem pemindah daya otomatis dari PLN ke Generator.',
-                layers: '4-Layer', finish: 'HASL Lead-Free', trace: '15 mil / 15 mil', software: 'Altium',
-                color: 0xF59E0B, // Kuning
+                desc: 'Sistem pemindah daya otomatis dari PLN ke Generator. Menangani arus tinggi (High Current).',
+                layers: '4-Layer', finish: 'HASL Lead-Free', trace: '15 mil / 15 mil', software: 'Altium', color: 0xF59E0B, 
                 model3D: { obj: null, mtl: null },
-                images: { '3d': 'https://placehold.co/1000x700/222/F59E0B?text=3D+View', 'top': 'https://placehold.co/1000x700/222/F59E0B?text=Top+Layer', 'bottom': 'https://placehold.co/1000x700/222/F59E0B?text=Bottom+Layer', 'schematic': 'https://placehold.co/1000x700/222/F59E0B?text=Schematic' }
+                images: { '3d': 'ats-3d.png', 'top': 'ats-top.png', 'bottom': 'ats-bot.png', 'schematic': 'ats-sch.png' }
             },
             'timbangan': {
-                type: 'Load Cell Interface', title: 'PCB Timbangan Digital',
+                type: 'Analog & ADC', title: 'PCB Timbangan Digital',
                 desc: 'Papan antarmuka ADC presisi tinggi untuk sensor Load Cell (HX711/Setara).',
-                layers: '2-Layer', finish: 'ENIG (Gold)', trace: '6 mil / 6 mil', software: 'KiCad',
-                color: 0x3b82f6, // Biru
+                layers: '2-Layer', finish: 'ENIG (Gold)', trace: '6 mil / 6 mil', software: 'KiCad', color: 0x3b82f6, 
                 model3D: { obj: null, mtl: null },
-                images: { '3d': 'https://placehold.co/1000x700/222/3b82f6?text=3D+View', 'top': 'https://placehold.co/1000x700/222/3b82f6?text=Top+Layer', 'bottom': 'https://placehold.co/1000x700/222/3b82f6?text=Bottom+Layer', 'schematic': 'https://placehold.co/1000x700/222/3b82f6?text=Schematic' }
+                images: { '3d': 'timbangan-3d.png', 'top': 'timbangan-top.png', 'bottom': 'timbangan-bot.png', 'schematic': 'timbangan-sch.png' }
+            },
+            'rfid': {
+                type: 'Access Control', title: 'PCB RFID',
+                desc: 'Modul pembaca kartu akses RFID / NFC untuk sistem keamanan pintu pintar.',
+                layers: '2-Layer', finish: 'HASL', trace: '8 mil / 8 mil', software: 'EasyEDA', color: 0x10b981,
+                model3D: { obj: null, mtl: null },
+                images: { '3d': 'rfid-3d.png', 'top': 'rfid-top.png', 'bottom': 'rfid-bot.png', 'schematic': 'rfid-sch.png' }
+            },
+            'meteran': {
+                type: 'IoT / Telemetry', title: 'PCB Meteran Air',
+                desc: 'Sistem pemantau debit air digital menggunakan sensor aliran (Flow Sensor) berbasis mikrokontroler.',
+                layers: '2-Layer', finish: 'HASL', trace: '10 mil / 10 mil', software: 'EasyEDA', color: 0x8b5cf6,
+                model3D: { obj: null, mtl: null },
+                images: { '3d': 'meteran-3d.png', 'top': 'meteran-top.png', 'bottom': 'meteran-bot.png', 'schematic': 'meteran-sch.png' }
+            },
+            'ledmeteran': {
+                type: 'Display Interface', title: 'PCB LED Meteran Air',
+                desc: 'Papan antarmuka (Display Board) khusus untuk menampilkan volume air secara visual.',
+                layers: '2-Layer', finish: 'HASL', trace: '12 mil / 12 mil', software: 'EasyEDA', color: 0x14b8a6,
+                model3D: { obj: null, mtl: null },
+                images: { '3d': 'ledmeteran-3d.png', 'top': 'ledmeteran-top.png', 'bottom': 'ledmeteran-bot.png', 'schematic': 'ledmeteran-sch.png' }
             }
         };
 
         let scene, camera, renderer, controls, boardGroup;
         let is3DInitialized = false;
 
+        function checkWebGL() {
+            try {
+                const canvas = document.createElement('canvas');
+                return !!(window.WebGLRenderingContext && (canvas.getContext('webgl') || canvas.getContext('experimental-webgl')));
+            } catch (e) { return false; }
+        }
+
         function init3D() {
+            if (!checkWebGL()) {
+                document.getElementById('webgl-error').classList.remove('hidden');
+                document.getElementById('webgl-error').classList.add('flex');
+                return false;
+            }
+
             const container = document.getElementById('canvas-3d');
             scene = new THREE.Scene();
+            
+            // Kamera sedikit dijauhkan
             camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-            camera.position.set(0, 15, 15);
+            camera.position.set(0, 25, 25);
             
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(container.clientWidth, container.clientHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
             
-            // Bersihkan kanvas jika ada
             container.innerHTML = '';
             container.appendChild(renderer.domElement);
             
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.05;
-            controls.maxPolarAngle = Math.PI / 2 + 0.2; 
+            controls.target.set(0, 0, 0);
             
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
             scene.add(ambientLight);
-            const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
-            dirLight.position.set(10, 20, 10);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(20, 30, 20);
             scene.add(dirLight);
 
             boardGroup = new THREE.Group();
@@ -259,129 +295,118 @@
 
             is3DInitialized = true;
             animate3D();
+            return true;
         }
 
-        // FUNGSI MEMUAT 3D AMAN & ANTI-CRASH
+        function animate3D() { 
+            requestAnimationFrame(animate3D); 
+            if(controls) controls.update(); 
+            if(renderer && scene && camera) renderer.render(scene, camera); 
+        }
+
+        function generateDummyBoard(colorHex) {
+            document.getElementById('loading-overlay').classList.remove('active');
+            while(boardGroup.children.length > 0){ boardGroup.remove(boardGroup.children[0]); }
+            
+            const boardGeo = new THREE.BoxGeometry(12, 0.3, 8);
+            const boardMat = new THREE.MeshStandardMaterial({ color: colorHex || 0x065F46, roughness: 0.3 });
+            const board = new THREE.Mesh(boardGeo, boardMat);
+            
+            const chipGeo = new THREE.BoxGeometry(2.5, 0.4, 2.5);
+            const chipMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
+            const chip = new THREE.Mesh(chipGeo, chipMat);
+            chip.position.set(0, 0.35, 0);
+            board.add(chip);
+
+            boardGroup.add(board);
+            boardGroup.rotation.set(0.5, 0.5, 0); 
+        }
+
         function generate3DBoard(projectId, colorHex) {
-            if (!is3DInitialized) init3D();
+            if (!is3DInitialized) {
+                if(!init3D()) return; // Stop jika WebGL diblokir
+            }
 
             while(boardGroup.children.length > 0){ boardGroup.remove(boardGroup.children[0]); }
+            
             const project = projectsData[projectId];
             const overlay = document.getElementById('loading-overlay');
             const loadText = document.getElementById('loading-text');
 
-            // Cek apakah URL valid & bukan di lingkungan internal preview yang belum ada filenya
-            const isValidFileUrl = (url) => {
-                if (!url || typeof url !== 'string') return false;
-                // Jika berada di GitHub Pages / Server HTTP nyata atau path yang valid
-                return true;
-            };
+            if (!project.model3D || !project.model3D.obj) {
+                generateDummyBoard(colorHex);
+                return;
+            }
 
-            if (project.model3D && project.model3D.obj && isValidFileUrl(project.model3D.obj)) {
-                overlay.classList.add('active');
+            overlay.classList.add('active');
+            loadText.innerText = "Mengecek Server...";
+
+            // SISTEM FETCH ANTI-NYANGKUT
+            fetch(project.model3D.obj)
+            .then(res => {
+                if (!res.ok) throw new Error("File OBJ tidak ditemukan (404)");
+                return res.text();
+            })
+            .then(text => {
+                if (text.includes("<!DOCTYPE html>")) throw new Error("URL salah, mengembalikan halaman HTML");
                 
+                loadText.innerText = "Merender OBJ...";
                 const objLoader = new THREE.OBJLoader();
                 
-                const loadJustShape = () => {
-                    loadText.innerText = "Memulihkan bentuk 3D...";
-                    try {
-                        objLoader.load(project.model3D.obj, function(object) {
-                            const defaultMaterial = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.5 });
-                            object.traverse(function(child) {
-                                if (child.isMesh) child.material = defaultMaterial;
-                            });
-                            setupAndDisplayObject(object);
-                        }, undefined, function(err) {
-                            console.warn("Gagal memuat file OBJ, beralih ke board simulasi:", err);
-                            overlay.classList.remove('active');
-                            generateDummyBoard(colorHex);
-                        });
-                    } catch (e) {
-                        console.warn("Exception saat memuat OBJ:", e);
-                        overlay.classList.remove('active');
-                        generateDummyBoard(colorHex);
-                    }
-                };
+                // Load obj langsung
+                objLoader.load(project.model3D.obj, function(object) {
+                    
+                    // Beri warna default jika mtl gagal
+                    const defaultMat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.5 });
+                    object.traverse(function(child) {
+                        if (child.isMesh && (!child.material || child.material.length === 0)) {
+                            child.material = defaultMat;
+                        }
+                    });
 
-                if (project.model3D.mtl) {
-                    loadText.innerText = "Membaca warna PCB...";
-                    try {
-                        const mtlLoader = new THREE.MTLLoader();
-                        mtlLoader.load(project.model3D.mtl, function(materials) {
-                            materials.preload();
-                            objLoader.setMaterials(materials);
-                            
-                            loadText.innerText = "Membentuk 3D...";
-                            try {
-                                objLoader.load(project.model3D.obj, function(object) {
-                                    setupAndDisplayObject(object);
-                                }, undefined, loadJustShape);
-                            } catch (e) {
-                                loadJustShape();
-                            }
-                        }, undefined, function(err) {
-                            console.warn("File MTL gagal dimuat, mencoba OBJ saja:", err);
-                            loadJustShape();
-                        });
-                    } catch (e) {
-                        console.warn("Exception saat memuat MTL:", e);
-                        loadJustShape();
-                    }
-                } else {
-                    loadJustShape();
-                }
-
-                function setupAndDisplayObject(object) {
+                    // PERHITUNGAN SKALA ANTI-MENGHILANG
                     const box = new THREE.Box3().setFromObject(object);
-                    const center = box.getCenter(new THREE.Vector3());
-                    const size = box.getSize(new THREE.Vector3());
-                    object.position.set(-center.x, -center.y, -center.z);
+                    const size = new THREE.Vector3();
+                    box.getSize(size);
                     
                     const maxDim = Math.max(size.x, size.y, size.z);
-                    const scale = maxDim > 0 ? 12 / maxDim : 1;
-                    object.scale.set(scale, scale, scale);
+                    if (maxDim > 0 && maxDim !== Infinity) {
+                        const scale = 18 / maxDim; // Paksa max panjang 18 unit (Terlihat pas di layar)
+                        object.scale.set(scale, scale, scale);
+                    }
 
-                    boardGroup.add(object);
-                    boardGroup.rotation.set(Math.PI/4, Math.PI/4, 0);
+                    // Tengahkan objek setelah diskala
+                    const box2 = new THREE.Box3().setFromObject(object);
+                    const center = new THREE.Vector3();
+                    box2.getCenter(center);
+                    object.position.set(-center.x, -center.y, -center.z);
+
+                    // Masukkan ke pivot
+                    const pivot = new THREE.Group();
+                    pivot.add(object);
+                    boardGroup.add(pivot);
+                    
+                    // Putar sedikit agar enak dilihat
+                    boardGroup.rotation.set(Math.PI/4, Math.PI/6, 0); 
                     overlay.classList.remove('active');
-                }
 
-            } else {
+                }, 
+                function(xhr) {
+                    if(xhr.lengthComputable) {
+                        loadText.innerText = `Memuat: ${Math.round(xhr.loaded / xhr.total * 100)}%`;
+                    } else {
+                        loadText.innerText = `Membaca data...`;
+                    }
+                }, 
+                function(err) {
+                    generateDummyBoard(colorHex);
+                });
+            })
+            .catch(err => {
+                console.log("Fallback 3D aktif:", err.message);
                 generateDummyBoard(colorHex);
-            }
+            });
         }
-
-        function generateDummyBoard(colorHex) {
-            const overlay = document.getElementById('loading-overlay');
-            overlay.classList.remove('active');
-
-            // Membuat PCB dummy lengkap dengan komponen visual 3D
-            const boardGeo = new THREE.BoxGeometry(10, 0.2, 6);
-            const boardMat = new THREE.MeshStandardMaterial({ color: colorHex || 0x065F46, roughness: 0.3 });
-            const board = new THREE.Mesh(boardGeo, boardMat);
-            
-            // Tambahkan beberapa komponen pada PCB buatan
-            const chipGeo = new THREE.BoxGeometry(2, 0.3, 2);
-            const chipMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
-            const chip = new THREE.Mesh(chipGeo, chipMat);
-            chip.position.set(0, 0.2, 0);
-            board.add(chip);
-
-            const capGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.8, 16);
-            const capMat = new THREE.MeshStandardMaterial({ color: 0x333333, metalness: 0.8, roughness: 0.2 });
-            const cap1 = new THREE.Mesh(capGeo, capMat);
-            cap1.position.set(-3, 0.4, 1.5);
-            board.add(cap1);
-
-            const cap2 = cap1.clone();
-            cap2.position.set(-3, 0.4, -1.5);
-            board.add(cap2);
-
-            boardGroup.add(board);
-            boardGroup.rotation.set(0.4, -0.5, 0); 
-        }
-
-        function animate3D() { requestAnimationFrame(animate3D); if(controls) controls.update(); if(renderer && scene && camera) renderer.render(scene, camera); }
 
         let currentProject = 'pemanas'; 
         function changeView(viewType) {
@@ -425,3 +450,11 @@
     </script>
 </body>
 </html>
+```
+
+### 💡 Tips Sangat Penting Setelah Menyimpan (Commit):
+Setelah Anda menekan *Commit changes* di GitHub:
+1. Buka halaman website portofolio Anda.
+2. Karena browser sering menyimpan "ingatan" (Cache) tentang kode Anda yang lama (yang error tadi), Anda **wajib membersihkan cache-nya.**
+3. Caranya: Tekan tombol **`Ctrl` + `F5`** atau **`Ctrl` + `Shift` + `R`** secara bersamaan di keyboard Anda.
+4. Perhatikan layar hitamnya. Apakah muncul papan PCB dummy? Ataukah muncul file 3D asli Anda? Atau muncul layar peringatan merah? Beritahu saya hasilnya!
