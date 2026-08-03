@@ -18,6 +18,10 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     
+    <!-- TAMBAHAN: Loader untuk membaca file asli (.obj dan .mtl) -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/MTLLoader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
+    
     <script>
         tailwind.config = {
             theme: {
@@ -363,8 +367,13 @@
                 layers: '2-Layer',
                 finish: 'HASL',
                 trace: '10 mil / 10 mil',
-                software: 'KiCad 7.0',
+                software: 'KiCad / EasyEDA',
                 color: 0xef4444, // Warna board 3D (Merah)
+                // TAMBAHAN: Masukkan nama file 3D Anda di bawah ini
+                model3D: {
+                    obj: 'nama-file-pemanas.obj', // UBAH INI DENGAN NAMA FILE .OBJ ANDA
+                    mtl: 'nama-file-pemanas.mtl'  // UBAH INI DENGAN NAMA FILE .MTL ANDA
+                },
                 images: {
                     '3d': 'https://placehold.co/1000x700/222/ef4444?text=Foto+Pemanas+Belum+Ada',
                     'top': 'https://placehold.co/1000x700/222/ef4444?text=Foto+Pemanas+Belum+Ada',
@@ -452,7 +461,8 @@
             animate3D();
         }
 
-        function generate3DBoard(colorHex) {
+        // FUNGSI 3D DIPERBARUI: Sekarang bisa load OBJ/MTL atau simulasi
+        function generate3DBoard(projectId, colorHex) {
             if (!is3DInitialized) init3D();
 
             // Hapus papan proyek sebelumnya
@@ -460,58 +470,85 @@
                 boardGroup.remove(boardGroup.children[0]); 
             }
 
-            // 1. Buat Base FR4 PCB
-            const boardGeo = new THREE.BoxGeometry(10, 0.15, 6);
-            const boardMat = new THREE.MeshStandardMaterial({ 
-                color: colorHex || 0x065F46, 
-                roughness: 0.6, metalness: 0.2
-            });
-            const board = new THREE.Mesh(boardGeo, boardMat);
-            boardGroup.add(board);
+            const project = projectsData[projectId];
 
-            // 2. Tambahkan Lubang/Pad Emas di ke-4 sudut (Mounting hole)
-            const padGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.16, 16);
-            const padMat = new THREE.MeshStandardMaterial({ color: 0xFFD700, metalness: 0.8, roughness: 0.2 });
-            const padPositions = [ [-4.5, 2.5], [4.5, 2.5], [-4.5, -2.5], [4.5, -2.5] ];
-            padPositions.forEach(pos => {
-                const pad = new THREE.Mesh(padGeo, padMat);
-                pad.position.set(pos[0], 0, pos[1]);
-                boardGroup.add(pad);
-            });
+            // Jika file 3D Asli tersedia di database
+            if (project.model3D && project.model3D.obj && project.model3D.mtl) {
+                // Tampilkan teks loading sementara (opsional, tapi berguna)
+                console.log("Loading Real 3D Model: " + project.title);
 
-            // 3. Tambahkan komponen-komponen SMD secara acak
-            const icGeo = new THREE.BoxGeometry(1.2, 0.2, 1.2);
-            const icMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 }); // IC Hitam
-            
-            const capGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.5, 16);
-            const capMat = new THREE.MeshStandardMaterial({ color: 0x1d4ed8, roughness: 0.4 }); // Kapasitor Elco
-            
-            const resistorGeo = new THREE.BoxGeometry(0.4, 0.1, 0.2);
-            const resistorMat = new THREE.MeshStandardMaterial({ color: 0x000000 }); // Resistor SMD
+                const mtlLoader = new THREE.MTLLoader();
+                mtlLoader.load(project.model3D.mtl, function(materials) {
+                    materials.preload();
+                    
+                    const objLoader = new THREE.OBJLoader();
+                    objLoader.setMaterials(materials);
+                    objLoader.load(project.model3D.obj, function(object) {
+                        
+                        // Kalkulasi ukuran asli dari EasyEDA dan paskan ke layar
+                        const box = new THREE.Box3().setFromObject(object);
+                        const center = box.getCenter(new THREE.Vector3());
+                        const size = box.getSize(new THREE.Vector3());
+                        
+                        // Pusatkan posisi 3D di tengah layar
+                        object.position.x = -center.x;
+                        object.position.y = -center.y;
+                        object.position.z = -center.z;
+                        
+                        // Perbesar/perkecil otomatis agar pas dengan kamera (Skala)
+                        const maxDim = Math.max(size.x, size.y, size.z);
+                        const scale = 12 / maxDim; // Angka 12 adalah ukuran ideal kamera kita
+                        object.scale.set(scale, scale, scale);
 
-            // Letakkan Microchip / IC
-            for(let i=0; i<4; i++) {
-                const ic = new THREE.Mesh(icGeo, icMat);
-                ic.position.set((Math.random() - 0.5) * 8, 0.15, (Math.random() - 0.5) * 4);
-                boardGroup.add(ic);
+                        boardGroup.add(object);
+                        boardGroup.rotation.set(0.5, 0.5, 0); // Posisi miring yang elegan
+                    });
+                });
+            } 
+            // Jika file 3D Asli TIDAK ADA, gunakan simulasi balok-balok 3D
+            else {
+                const boardGeo = new THREE.BoxGeometry(10, 0.15, 6);
+                const boardMat = new THREE.MeshStandardMaterial({ 
+                    color: colorHex || 0x065F46, 
+                    roughness: 0.6, metalness: 0.2
+                });
+                const board = new THREE.Mesh(boardGeo, boardMat);
+                boardGroup.add(board);
+
+                const padGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.16, 16);
+                const padMat = new THREE.MeshStandardMaterial({ color: 0xFFD700, metalness: 0.8, roughness: 0.2 });
+                const padPositions = [ [-4.5, 2.5], [4.5, 2.5], [-4.5, -2.5], [4.5, -2.5] ];
+                padPositions.forEach(pos => {
+                    const pad = new THREE.Mesh(padGeo, padMat);
+                    pad.position.set(pos[0], 0, pos[1]);
+                    boardGroup.add(pad);
+                });
+
+                const icGeo = new THREE.BoxGeometry(1.2, 0.2, 1.2);
+                const icMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 }); 
+                const capGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.5, 16);
+                const capMat = new THREE.MeshStandardMaterial({ color: 0x1d4ed8, roughness: 0.4 }); 
+                const resistorGeo = new THREE.BoxGeometry(0.4, 0.1, 0.2);
+                const resistorMat = new THREE.MeshStandardMaterial({ color: 0x000000 }); 
+
+                for(let i=0; i<4; i++) {
+                    const ic = new THREE.Mesh(icGeo, icMat);
+                    ic.position.set((Math.random() - 0.5) * 8, 0.15, (Math.random() - 0.5) * 4);
+                    boardGroup.add(ic);
+                }
+                for(let i=0; i<6; i++) {
+                    const cap = new THREE.Mesh(capGeo, capMat);
+                    cap.position.set((Math.random() - 0.5) * 8, 0.3, (Math.random() - 0.5) * 4);
+                    boardGroup.add(cap);
+                }
+                for(let i=0; i<20; i++) {
+                    const res = new THREE.Mesh(resistorGeo, resistorMat);
+                    res.position.set((Math.random() - 0.5) * 9, 0.1, (Math.random() - 0.5) * 5);
+                    boardGroup.add(res);
+                }
+
+                boardGroup.rotation.set(0.2, -0.5, 0); 
             }
-
-            // Letakkan Kapasitor Elco (Tabung biru)
-            for(let i=0; i<6; i++) {
-                const cap = new THREE.Mesh(capGeo, capMat);
-                cap.position.set((Math.random() - 0.5) * 8, 0.3, (Math.random() - 0.5) * 4);
-                boardGroup.add(cap);
-            }
-            
-            // Letakkan Resistor SMD kecil-kecil
-            for(let i=0; i<20; i++) {
-                const res = new THREE.Mesh(resistorGeo, resistorMat);
-                res.position.set((Math.random() - 0.5) * 9, 0.1, (Math.random() - 0.5) * 5);
-                boardGroup.add(res);
-            }
-
-            // Kembalikan posisi awal ke sudut miring
-            boardGroup.rotation.set(0.2, -0.5, 0); 
         }
 
         function animate3D() {
@@ -536,14 +573,13 @@
             const buttons = document.querySelectorAll('.view-btn');
             
             if (viewType === '3d') {
-                // Sembunyikan Foto 2D, Tampilkan Canvas 3D
                 imgElement.classList.add('hidden');
                 canvas3D.classList.remove('hidden');
                 canvas3D.style.opacity = '1';
                 
-                // Bangun ulang struktur 3D sesuai warna khas proyek yang dipilih
                 const projectColor = projectsData[currentProject].color || 0x065F46;
-                generate3DBoard(projectColor);
+                // TAMBAHAN: Kita sekarang mengirim 'currentProject' ke fungsi generate
+                generate3DBoard(currentProject, projectColor);
             } else {
                 // Tampilkan Foto 2D, Sembunyikan Canvas 3D
                 canvas3D.style.opacity = '0';
