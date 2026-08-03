@@ -11,14 +11,14 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Google Fonts (Inter for UI, JetBrains Mono for Tech Specs) -->
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
     
-    <!-- Three.js untuk Simulasi 3D Viewer interaktif -->
+    <!-- Three.js Core -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- OrbitControls (Untuk memutar 3D) -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-    
-    <!-- TAMBAHAN: Loader untuk membaca file asli (.obj dan .mtl) -->
+    <!-- MTLLoader & OBJLoader (Untuk membaca file 3D asli EasyEDA Anda) -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/MTLLoader.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/OBJLoader.js"></script>
     
@@ -31,12 +31,10 @@
                         'mono': ['JetBrains Mono', 'monospace'],
                     },
                     colors: {
-                        dark: '#0a0a0a',        // Very dark background
+                        dark: '#0a0a0a',
                         darker: '#050505',
-                        panel: '#171717',       // Dark gray for cards
-                        copper: '#F59E0B',      // PCB Copper/Gold finish color
-                        'pcb-green': '#065F46', // Classic PCB solder mask green
-                        'solder': '#9CA3AF'     // Silver/gray solder color
+                        panel: '#171717',
+                        copper: '#F59E0B',
                     }
                 }
             }
@@ -44,54 +42,40 @@
     </script>
     
     <style>
-        body {
-            background-color: #0a0a0a;
-            color: #d1d5db;
-        }
-
-        /* Dot Grid Background resembling a breadboard or perfboard */
+        body { background-color: #0a0a0a; color: #d1d5db; }
         .bg-perfboard {
             background-image: radial-gradient(#333 1px, transparent 1px);
             background-size: 20px 20px;
         }
-
-        /* Copper trace subtle background line */
-        .copper-trace {
-            position: relative;
-        }
+        .copper-trace { position: relative; }
         .copper-trace::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 0;
-            width: 60px;
-            height: 2px;
-            background-color: #F59E0B;
-            transition: width 0.3s ease;
+            content: ''; position: absolute; bottom: -10px; left: 0;
+            width: 60px; height: 2px; background-color: #F59E0B; transition: width 0.3s ease;
         }
-        .group:hover .copper-trace::after {
-            width: 100%;
-        }
-
-        /* Custom Scrollbar */
+        .group:hover .copper-trace::after { width: 100%; }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #0a0a0a; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #F59E0B; }
-
-        /* Smooth fade for image transitions */
-        .fade-img {
-            animation: fadeIn 0.4s ease-in-out;
-        }
+        .fade-img { animation: fadeIn 0.4s ease-in-out; }
         @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.98); }
             to { opacity: 1; transform: scale(1); }
         }
+        
+        /* Loading Overlay saat file 3D diunduh */
+        #loading-overlay {
+            position: absolute; inset: 0; background: rgba(17, 17, 17, 0.8);
+            display: flex; flex-direction: column; justify-content: center; items-center: center;
+            z-index: 40; color: #F59E0B; font-family: 'JetBrains Mono', monospace; font-size: 14px;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
+        }
+        #loading-overlay.active { opacity: 1; pointer-events: auto; }
     </style>
 </head>
+
 <body class="bg-perfboard antialiased selection:bg-copper selection:text-black">
 
-    <!-- Navigation -->
     <nav class="fixed w-full z-50 bg-dark/90 backdrop-blur-md border-b border-white/5">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-20">
@@ -102,7 +86,6 @@
                 <div class="hidden md:flex space-x-8 font-medium text-sm text-gray-400">
                     <a href="#hero" class="hover:text-copper transition-colors">Home</a>
                     <a href="#pcb-showcase" class="text-white hover:text-copper transition-colors">PCB Layouts</a>
-                    <a href="#projects" class="hover:text-copper transition-colors">Hardware Projects</a>
                     <a href="#contact" class="hover:text-copper transition-colors">Contact</a>
                 </div>
             </div>
@@ -110,8 +93,6 @@
     </nav>
 
     <main class="pt-20">
-        
-        <!-- Hero Section -->
         <section id="hero" class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-32">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <div>
@@ -136,37 +117,38 @@
                         </a>
                     </div>
                 </div>
-                <!-- Abstract Hero Image (Placeholder for a 3D board render) -->
                 <div class="relative hidden lg:block">
                     <div class="absolute inset-0 bg-copper/20 blur-[100px] rounded-full"></div>
-                    <img src="https://placehold.co/600x600/171717/F59E0B?text=Hero+3D+PCB+Render\n(Drop+your+transparent+PNG+here)" alt="3D PCB Render" class="relative z-10 rounded-xl border border-white/10 shadow-2xl shadow-black">
+                    <img src="https://placehold.co/600x600/171717/F59E0B?text=Embedded+Systems\nEngineering" alt="Hero Render" class="relative z-10 rounded-xl border border-white/10 shadow-2xl shadow-black">
                 </div>
             </div>
         </section>
 
-        <!-- PCB SHOWCASE SECTION (THE CORE REQUEST) -->
-        <section id="pcb-showcase" class="bg-darker py-24 border-y border-white/5">
+        <section id="pcb-showcase" class="bg-darker py-24 border-y border-white/5 scroll-mt-20">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 
                 <div class="mb-16">
                     <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 copper-trace inline-block">Featured PCB Layout</h2>
-                    <p class="text-gray-400 mt-4 max-w-2xl">Presentasi detail rancangan papan sirkuit cetak. Gunakan kontrol di bawah untuk meninjau lapisan berbeda dari papan.</p>
+                    <p class="text-gray-400 mt-4 max-w-2xl">Presentasi detail rancangan papan sirkuit cetak. Gunakan kontrol di bawah untuk meninjau lapisan berbeda atau putar model 3D.</p>
                 </div>
 
-                <!-- Showcase Main Container -->
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 bg-panel rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
                     
-                    <!-- Left Side: Interactive Viewer -->
                     <div class="lg:col-span-8 relative bg-[#111] p-4 flex flex-col justify-center items-center min-h-[400px] md:min-h-[600px]">
                         
-                        <!-- Image & 3D Viewer Area -->
                         <div id="viewer-container" class="w-full h-full flex items-center justify-center overflow-hidden rounded-lg relative cursor-move">
                             
-                            <!-- 3D Canvas (Bisa diputar oleh mouse user) -->
+                            <!-- 3D Canvas -->
                             <div id="canvas-3d" class="w-full h-full absolute inset-0 z-10 transition-opacity duration-300"></div>
                             
-                            <!-- 2D Image Viewer (Tersembunyi secara default saat mode 3D) -->
+                            <!-- 2D Image Viewer -->
                             <img id="board-image" src="" alt="PCB View" class="w-full object-contain max-h-[600px] fade-img absolute inset-0 m-auto z-20 hidden bg-[#111]">
+                            
+                            <!-- Loading Text -->
+                            <div id="loading-overlay" class="items-center">
+                                <i class="fas fa-circle-notch fa-spin text-3xl mb-3"></i>
+                                <span id="loading-text">Loading 3D Model...</span>
+                            </div>
                         </div>
 
                         <!-- Viewer Controls -->
@@ -178,95 +160,81 @@
                         </div>
                     </div>
 
-                    <!-- Right Side: Specs & Info -->
+                    <!-- Tech Specs -->
                     <div class="lg:col-span-4 p-8 flex flex-col justify-between">
                         <div>
                             <div class="flex items-center gap-2 text-copper text-sm font-mono mb-4">
-                                <i class="fas fa-microchip"></i> <span id="feat-type">Power Management Board</span>
+                                <i class="fas fa-microchip"></i> <span id="feat-type">...</span>
                             </div>
-                            <h3 id="feat-title" class="text-2xl font-bold text-white mb-4">PCB ATS (Auto Transfer Switch)</h3>
-                            <p id="feat-desc" class="text-gray-400 text-sm mb-8 leading-relaxed">
-                                Sistem pemindah daya otomatis untuk mengalihkan sumber listrik dari PLN ke Generator/Baterai secara instan tanpa jeda panjang, dilengkapi proteksi arus lebih.
-                            </p>
+                            <h3 id="feat-title" class="text-2xl font-bold text-white mb-4">...</h3>
+                            <p id="feat-desc" class="text-gray-400 text-sm mb-8 leading-relaxed">...</p>
                             
-                            <!-- Tech Specs Table -->
                             <div class="space-y-4">
                                 <h4 class="text-white font-semibold text-sm uppercase tracking-wider mb-2 border-b border-gray-800 pb-2">Board Specifications</h4>
                                 <div class="flex justify-between items-center text-sm">
                                     <span class="text-gray-500">Layers</span>
-                                    <span id="spec-layers" class="text-white font-mono bg-dark px-2 py-1 rounded">4-Layer (High Voltage)</span>
-                                </div>
-                                <div class="flex justify-between items-center text-sm">
-                                    <span class="text-gray-500">Material</span>
-                                    <span class="text-white font-mono bg-dark px-2 py-1 rounded">FR-4, TG150, 1.6mm</span>
+                                    <span id="spec-layers" class="text-white font-mono bg-dark px-2 py-1 rounded">...</span>
                                 </div>
                                 <div class="flex justify-between items-center text-sm">
                                     <span class="text-gray-500">Min Trace / Space</span>
-                                    <span id="spec-trace" class="text-white font-mono bg-dark px-2 py-1 rounded">15 mil / 15 mil</span>
+                                    <span id="spec-trace" class="text-white font-mono bg-dark px-2 py-1 rounded">...</span>
                                 </div>
                                 <div class="flex justify-between items-center text-sm">
                                     <span class="text-gray-500">Surface Finish</span>
-                                    <span id="spec-finish" class="text-white font-mono bg-dark px-2 py-1 rounded">HASL Lead-Free</span>
+                                    <span id="spec-finish" class="text-white font-mono bg-dark px-2 py-1 rounded">...</span>
                                 </div>
                                 <div class="flex justify-between items-center text-sm">
                                     <span class="text-gray-500">Software</span>
-                                    <span id="spec-software" class="text-copper font-mono bg-copper/10 px-2 py-1 rounded">Altium Designer</span>
+                                    <span id="spec-software" class="text-copper font-mono bg-copper/10 px-2 py-1 rounded">...</span>
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="mt-12">
-                            <a href="#" class="block w-full py-3 px-4 bg-white text-black text-center font-semibold rounded hover:bg-copper transition-colors">
-                                <i class="fab fa-github mr-2"></i> View Gerber & Source
-                            </a>
                         </div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Secondary Boards Grid -->
         <section class="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h3 class="text-xl font-bold text-white mb-2 border-l-4 border-copper pl-4">Koleksi Desain Layout PCB</h3>
             <p class="text-gray-400 mb-8 ml-5 text-sm">Klik pada kartu di bawah ini untuk melihat detail desain pada layar utama di atas.</p>
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Board 1: ATS -->
+                
+                <!-- Board 1: Pemanas (Paling Pertama karena sudah ada filenya) -->
+                <div onclick="selectBoard('pemanas')" class="bg-panel p-4 rounded-xl border border-white/5 group hover:border-copper/50 transition-all cursor-pointer hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(239,68,68,0.1)]">
+                    <div class="h-40 bg-dark rounded-lg mb-4 overflow-hidden relative">
+                        <!-- Menggunakan foto bot sebagai thumbnail sementara karena top belum ada -->
+                        <img src="pemanas-bot.png" onerror="this.src='https://placehold.co/400x300/171717/ef4444?text=Layar+Pemanas'" alt="Pemanas" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    </div>
+                    <h4 class="text-white font-bold mb-1">PCB Layar Pemanas</h4>
+                    <p class="text-gray-500 text-sm font-mono">HMI & Heater Driver</p>
+                </div>
+
+                <!-- Board 2: ATS -->
                 <div onclick="selectBoard('ats')" class="bg-panel p-4 rounded-xl border border-white/5 group hover:border-copper/50 transition-all cursor-pointer hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(245,158,11,0.1)]">
                     <div class="h-40 bg-dark rounded-lg mb-4 overflow-hidden relative">
-                        <!-- UBAH NAMA FILE GAMBAR THUMBNAIL DI BAWAH INI (di dalam src="") -->
-                        <img src="nama-foto-thumbnail-ats.png" alt="ATS" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <img src="https://placehold.co/400x300/171717/F59E0B?text=PCB+ATS" alt="ATS" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                     </div>
                     <h4 class="text-white font-bold mb-1">PCB ATS</h4>
                     <p class="text-gray-500 text-sm font-mono">Auto Transfer Switch</p>
                 </div>
                 
-                <!-- Board 2: Timbangan -->
+                <!-- Board 3: Timbangan -->
                 <div onclick="selectBoard('timbangan')" class="bg-panel p-4 rounded-xl border border-white/5 group hover:border-copper/50 transition-all cursor-pointer hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(59,130,246,0.1)]">
                     <div class="h-40 bg-dark rounded-lg mb-4 overflow-hidden relative">
-                        <!-- UBAH NAMA FILE GAMBAR THUMBNAIL DI BAWAH INI -->
-                        <img src="nama-foto-thumbnail-timbangan.png" alt="Timbangan" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <img src="https://placehold.co/400x300/171717/3b82f6?text=Timbangan" alt="Timbangan" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                     </div>
                     <h4 class="text-white font-bold mb-1">PCB Timbangan Digital</h4>
                     <p class="text-gray-500 text-sm font-mono">Load Cell / ADC HX711</p>
                 </div>
 
-                <!-- Board 3: RFID -->
+                <!-- Board 4: RFID -->
                 <div onclick="selectBoard('rfid')" class="bg-panel p-4 rounded-xl border border-white/5 group hover:border-copper/50 transition-all cursor-pointer hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(16,185,129,0.1)]">
                     <div class="h-40 bg-dark rounded-lg mb-4 overflow-hidden relative">
                         <img src="https://placehold.co/400x300/171717/10b981?text=PCB+RFID" alt="RFID" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                     </div>
                     <h4 class="text-white font-bold mb-1">PCB RFID Reader</h4>
                     <p class="text-gray-500 text-sm font-mono">13.56MHz Access Control</p>
-                </div>
-
-                <!-- Board 4: Layar Pemanas -->
-                <div onclick="selectBoard('pemanas')" class="bg-panel p-4 rounded-xl border border-white/5 group hover:border-copper/50 transition-all cursor-pointer hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(239,68,68,0.1)]">
-                    <div class="h-40 bg-dark rounded-lg mb-4 overflow-hidden relative">
-                        <img src="https://placehold.co/400x300/171717/ef4444?text=Layar+Pemanas" alt="Pemanas" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                    </div>
-                    <h4 class="text-white font-bold mb-1">PCB Layar Pemanas</h4>
-                    <p class="text-gray-500 text-sm font-mono">HMI & Heater Driver</p>
                 </div>
 
                 <!-- Board 5: Meteran Air -->
@@ -296,125 +264,82 @@
                 <a href="mailto:email@example.com" class="inline-flex items-center gap-2 px-6 py-3 border border-copper text-copper rounded hover:bg-copper hover:text-black transition-colors mb-8 font-semibold">
                     <i class="fas fa-envelope"></i> Hubungi Saya
                 </a>
-                <div class="flex justify-center gap-6 text-gray-500">
-                    <a href="#" class="hover:text-white transition-colors text-xl"><i class="fab fa-github"></i></a>
-                    <a href="#" class="hover:text-white transition-colors text-xl"><i class="fab fa-linkedin"></i></a>
-                    <a href="#" class="hover:text-white transition-colors text-xl"><i class="fab fa-twitter"></i></a>
-                </div>
-                <p class="mt-8 text-gray-600 text-sm font-mono">
-                    © 2026 Zidaan Electronics. Crafted with precision.
-                </p>
+                <p class="mt-8 text-gray-600 text-sm font-mono">© 2026 Zidaan Electronics. Crafted with precision.</p>
             </div>
         </footer>
 
     </main>
 
     <script>
-        // Database proyek PCB Anda dengan spesifikasi dan gambar masing-masing
+        // DATABASE PROYEK
         const projectsData = {
-            'ats': {
-                type: 'Power Management Board',
-                title: 'PCB ATS (Auto Transfer Switch)',
-                desc: 'Sistem pemindah daya otomatis untuk mengalihkan sumber listrik dari PLN ke Generator/Baterai secara instan tanpa jeda panjang, dilengkapi proteksi arus lebih dan monitoring tegangan.',
-                layers: '4-Layer (High Voltage)',
-                finish: 'HASL Lead-Free',
-                trace: '15 mil / 15 mil',
-                software: 'Altium Designer',
-                color: 0xF59E0B, // Warna board 3D (Tembaga/Kuning)
-                images: {
-                    '3d': 'nama-foto-ats-3d.png',
-                    'top': 'nama-foto-ats-layer-atas.png',
-                    'bottom': 'nama-foto-ats-layer-bawah.png',
-                    'schematic': 'nama-foto-ats-skematik.png'
-                }
-            },
-            'timbangan': {
-                type: 'Load Cell Interface',
-                title: 'PCB Timbangan Digital',
-                desc: 'Papan antarmuka ADC presisi tinggi untuk sensor Load Cell (HX711/Setara). Didesain dengan pemisahan jalur ground analog dan digital (Star Grounding) untuk meminimalisir noise sinyal mikrovolt.',
-                layers: '2-Layer',
-                finish: 'ENIG (Gold)',
-                trace: '6 mil / 6 mil',
-                software: 'KiCad 7.0',
-                color: 0x3b82f6, // Warna board 3D (Biru)
-                images: {
-                    '3d': 'nama-foto-timbangan-3d.png',
-                    'top': 'nama-foto-timbangan-top.png',
-                    'bottom': 'nama-foto-timbangan-bot.png',
-                    'schematic': 'nama-foto-timbangan-sch.png'
-                }
-            },
-            'rfid': {
-                type: 'Access Control Module',
-                title: 'PCB RFID Reader',
-                desc: 'Modul pembaca kartu RFID (13.56MHz / 125kHz) terintegrasi dengan antena internal melingkar di atas PCB. Desain jalur RF yang dioptimalkan untuk memaksimalkan jarak baca tag.',
-                layers: '2-Layer',
-                finish: 'HASL',
-                trace: '8 mil / 8 mil',
-                software: 'Altium Designer',
-                color: 0x10b981, // Warna board 3D (Hijau)
-                images: {
-                    '3d': 'https://placehold.co/1000x700/222/10b981?text=Foto+RFID+Belum+Ada',
-                    'top': 'https://placehold.co/1000x700/222/10b981?text=Foto+RFID+Belum+Ada',
-                    'bottom': 'https://placehold.co/1000x700/222/10b981?text=Foto+RFID+Belum+Ada',
-                    'schematic': 'https://placehold.co/1000x700/222/10b981?text=Foto+RFID+Belum+Ada'
-                }
-            },
+            // PROYEK 1: LAYAR PEMANAS (Ini sudah ada file aslinya)
             'pemanas': {
                 type: 'HMI & Controller',
                 title: 'PCB Layar Pemanas',
-                desc: 'Modul antarmuka layar (Display HMI) yang digabungkan dengan driver pengontrol elemen pemanas (Heater). Dilengkapi sirkuit isolasi optocoupler untuk keamanan pengguna dari tegangan tinggi.',
-                layers: '2-Layer',
-                finish: 'HASL',
-                trace: '10 mil / 10 mil',
-                software: 'KiCad / EasyEDA',
-                color: 0xef4444, // Warna board 3D (Merah)
-                // TAMBAHAN: Masukkan nama file 3D Anda di bawah ini
+                desc: 'Modul antarmuka layar (Display HMI) yang digabungkan dengan driver pengontrol elemen pemanas (Heater). Dilengkapi sirkuit isolasi untuk keamanan pengguna dari tegangan tinggi.',
+                layers: '2-Layer', finish: 'HASL', trace: '10 mil / 10 mil', software: 'EasyEDA',
+                color: 0xef4444, // Warna merah (sebagai fallback)
+                
+                // DATA FILE 3D ASLI (Sesuai dengan screenshot GitHub Anda)
                 model3D: {
-                    obj: 'nama-file-pemanas.obj', // UBAH INI DENGAN NAMA FILE .OBJ ANDA
-                    mtl: 'nama-file-pemanas.mtl'  // UBAH INI DENGAN NAMA FILE .MTL ANDA
+                    obj: 'pemanas-3d.obj', 
+                    mtl: 'pemanas-3d.mtl'  
                 },
+                // DATA FOTO-FOTO
                 images: {
-                    '3d': 'https://placehold.co/1000x700/222/ef4444?text=Foto+Pemanas+Belum+Ada',
-                    'top': 'https://placehold.co/1000x700/222/ef4444?text=Foto+Pemanas+Belum+Ada',
-                    'bottom': 'https://placehold.co/1000x700/222/ef4444?text=Foto+Pemanas+Belum+Ada',
-                    'schematic': 'https://placehold.co/1000x700/222/ef4444?text=Foto+Pemanas+Belum+Ada'
+                    '3d': 'https://placehold.co/1000x700/222/ef4444?text=Sedang+Memuat+3D...', 
+                    'top': 'https://placehold.co/1000x700/222/ef4444?text=Foto+Top+Layer+Belum+Diunggah', 
+                    'bottom': 'pemanas-bot.png',
+                    'schematic': 'pemanas-sch.png'
                 }
+            },
+            
+            // PROYEK 2: ATS
+            'ats': {
+                type: 'Power Management Board', title: 'PCB ATS (Auto Transfer Switch)',
+                desc: 'Sistem pemindah daya otomatis untuk mengalihkan sumber listrik dari PLN ke Generator/Baterai secara instan tanpa jeda panjang, dilengkapi proteksi arus lebih.',
+                layers: '4-Layer', finish: 'HASL Lead-Free', trace: '15 mil / 15 mil', software: 'Altium Designer',
+                color: 0xF59E0B, // Warna Tembaga/Kuning
+                images: {
+                    '3d': 'https://placehold.co/1000x700/222/F59E0B?text=Belum+Ada+Foto',
+                    'top': 'https://placehold.co/1000x700/222/F59E0B?text=Belum+Ada+Foto',
+                    'bottom': 'https://placehold.co/1000x700/222/F59E0B?text=Belum+Ada+Foto',
+                    'schematic': 'https://placehold.co/1000x700/222/F59E0B?text=Belum+Ada+Foto'
+                }
+            },
+
+            // PROYEK LAINNYA (Timbangan, RFID, Meteran, dll)
+            'timbangan': {
+                type: 'Load Cell Interface', title: 'PCB Timbangan Digital',
+                desc: 'Papan antarmuka ADC presisi tinggi untuk sensor Load Cell (HX711/Setara). Didesain dengan pemisahan jalur ground analog dan digital untuk meminimalisir noise sinyal mikrovolt.',
+                layers: '2-Layer', finish: 'ENIG (Gold)', trace: '6 mil / 6 mil', software: 'KiCad',
+                color: 0x3b82f6, // Biru
+                images: {
+                    '3d': 'https://placehold.co/1000x700/222/3b82f6?text=Belum+Ada+Foto', 'top': 'https://placehold.co/1000x700/222/3b82f6?text=Belum+Ada+Foto', 'bottom': 'https://placehold.co/1000x700/222/3b82f6?text=Belum+Ada+Foto', 'schematic': 'https://placehold.co/1000x700/222/3b82f6?text=Belum+Ada+Foto'
+                }
+            },
+            'rfid': {
+                type: 'Access Control', title: 'PCB RFID Reader',
+                desc: 'Modul pembaca kartu RFID (13.56MHz) dengan antena internal melingkar di atas PCB.',
+                layers: '2-Layer', finish: 'HASL', trace: '8 mil / 8 mil', software: 'Altium', color: 0x10b981,
+                images: { '3d': 'https://placehold.co/1000x700/222/10b981?text=Belum+Ada+Foto', 'top': 'https://placehold.co/1000x700/222/10b981?text=Belum+Ada+Foto', 'bottom': 'https://placehold.co/1000x700/222/10b981?text=Belum+Ada+Foto', 'schematic': 'https://placehold.co/1000x700/222/10b981?text=Belum+Ada+Foto' }
             },
             'meteran': {
-                type: 'IoT Smart Meter',
-                title: 'PCB Meteran Air',
-                desc: 'Papan utama (Motherboard) untuk sistem meteran air pintar. Membaca sensor aliran air (flow meter), mengolah data konsumsi, dan mentransmisikan data secara nirkabel melalui WiFi atau LoRa.',
-                layers: '4-Layer',
-                finish: 'ENIG (Gold)',
-                trace: '5 mil / 5 mil',
-                software: 'KiCad 7.0',
-                color: 0x8b5cf6, // Warna board 3D (Ungu)
-                images: {
-                    '3d': 'https://placehold.co/1000x700/222/8b5cf6?text=Foto+Meteran+Belum+Ada',
-                    'top': 'https://placehold.co/1000x700/222/8b5cf6?text=Foto+Meteran+Belum+Ada',
-                    'bottom': 'https://placehold.co/1000x700/222/8b5cf6?text=Foto+Meteran+Belum+Ada',
-                    'schematic': 'https://placehold.co/1000x700/222/8b5cf6?text=Foto+Meteran+Belum+Ada'
-                }
+                type: 'IoT Smart Meter', title: 'PCB Meteran Air',
+                desc: 'Motherboard sistem meteran air pintar. Membaca flow meter dan mentransmisikan data via WiFi/LoRa.',
+                layers: '4-Layer', finish: 'ENIG', trace: '5 mil / 5 mil', software: 'KiCad', color: 0x8b5cf6,
+                images: { '3d': 'https://placehold.co/1000x700/222/8b5cf6?text=Belum+Ada+Foto', 'top': 'https://placehold.co/1000x700/222/8b5cf6?text=Belum+Ada+Foto', 'bottom': 'https://placehold.co/1000x700/222/8b5cf6?text=Belum+Ada+Foto', 'schematic': 'https://placehold.co/1000x700/222/8b5cf6?text=Belum+Ada+Foto' }
             },
             'led-meteran': {
-                type: 'Visual Display Board',
-                title: 'PCB LED Meteran Air',
-                desc: 'Papan sirkuit tambahan (Daughter board) yang berisi matriks LED atau indikator visual 7-segment. Didesain dengan IC Shift Register untuk kecerahan tinggi agar mudah dibaca di lingkungan outdoor.',
-                layers: '2-Layer',
-                finish: 'HASL',
-                trace: '8 mil / 8 mil',
-                software: 'Eagle / KiCad',
-                color: 0x0ea5e9, // Warna board 3D (Biru Muda)
-                images: {
-                    '3d': 'https://placehold.co/1000x700/222/0ea5e9?text=Foto+LED+Belum+Ada',
-                    'top': 'https://placehold.co/1000x700/222/0ea5e9?text=Foto+LED+Belum+Ada',
-                    'bottom': 'https://placehold.co/1000x700/222/0ea5e9?text=Foto+LED+Belum+Ada',
-                    'schematic': 'https://placehold.co/1000x700/222/0ea5e9?text=Foto+LED+Belum+Ada'
-                }
+                type: 'Display Board', title: 'PCB LED Meteran Air',
+                desc: 'Daughter board berisi indikator visual 7-segment / LED Matriks dengan IC Shift Register.',
+                layers: '2-Layer', finish: 'HASL', trace: '8 mil / 8 mil', software: 'EasyEDA', color: 0x0ea5e9,
+                images: { '3d': 'https://placehold.co/1000x700/222/0ea5e9?text=Belum+Ada+Foto', 'top': 'https://placehold.co/1000x700/222/0ea5e9?text=Belum+Ada+Foto', 'bottom': 'https://placehold.co/1000x700/222/0ea5e9?text=Belum+Ada+Foto', 'schematic': 'https://placehold.co/1000x700/222/0ea5e9?text=Belum+Ada+Foto' }
             }
         };
 
+        // SETUP THREE.JS
         let scene, camera, renderer, controls, boardGroup;
         let is3DInitialized = false;
 
@@ -422,35 +347,34 @@
             const container = document.getElementById('canvas-3d');
             scene = new THREE.Scene();
             
-            // Pengaturan Kamera
             camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
-            camera.position.set(0, 12, 12);
+            camera.position.set(0, 15, 15);
             
-            // Pengaturan Renderer (Anti-aliasing agar pinggiran mulus)
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(container.clientWidth, container.clientHeight);
             renderer.setPixelRatio(window.devicePixelRatio);
             container.appendChild(renderer.domElement);
             
-            // Orbit Controls (Fitur putar 360 derajat oleh kursor/jari)
             controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true; // Efek licin elegan
+            controls.enableDamping = true;
             controls.dampingFactor = 0.05;
-            controls.maxPolarAngle = Math.PI / 2 + 0.2; // Membatasi putaran ke bawah
+            controls.maxPolarAngle = Math.PI / 2 + 0.1; 
             
-            // Setup Pencahayaan Laboratorium
-            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            // Pencahayaan
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
             scene.add(ambientLight);
             
-            const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
-            dirLight.position.set(10, 20, 10);
-            scene.add(dirLight);
+            const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight1.position.set(10, 20, 10);
+            scene.add(dirLight1);
+            
+            const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.5);
+            dirLight2.position.set(-10, -10, -10);
+            scene.add(dirLight2);
 
-            // Group untuk menampung Papan dan Komponen
             boardGroup = new THREE.Group();
             scene.add(boardGroup);
 
-            // Menyesuaikan ukuran otomatis bila browser di-resize
             window.addEventListener('resize', () => {
                 camera.aspect = container.clientWidth / container.clientHeight;
                 camera.updateProjectionMatrix();
@@ -461,111 +385,109 @@
             animate3D();
         }
 
-        // FUNGSI 3D DIPERBARUI: Sekarang bisa load OBJ/MTL atau simulasi
         function generate3DBoard(projectId, colorHex) {
             if (!is3DInitialized) init3D();
 
-            // Hapus papan proyek sebelumnya
+            // Bersihkan model sebelumnya
             while(boardGroup.children.length > 0){ 
                 boardGroup.remove(boardGroup.children[0]); 
             }
 
             const project = projectsData[projectId];
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const loadingText = document.getElementById('loading-text');
 
-            // Jika file 3D Asli tersedia di database
+            // JIKA ADA FILE ASLI (.obj dan .mtl)
             if (project.model3D && project.model3D.obj && project.model3D.mtl) {
-                // Tampilkan teks loading sementara (opsional, tapi berguna)
-                console.log("Loading Real 3D Model: " + project.title);
+                loadingOverlay.classList.add('active');
+                loadingText.innerText = "Downloading Original 3D Model...";
 
                 const mtlLoader = new THREE.MTLLoader();
+                
                 mtlLoader.load(project.model3D.mtl, function(materials) {
                     materials.preload();
                     
                     const objLoader = new THREE.OBJLoader();
                     objLoader.setMaterials(materials);
+                    
                     objLoader.load(project.model3D.obj, function(object) {
-                        
-                        // Kalkulasi ukuran asli dari EasyEDA dan paskan ke layar
+                        // Agar model berada tepat di tengah (Auto-Center)
                         const box = new THREE.Box3().setFromObject(object);
                         const center = box.getCenter(new THREE.Vector3());
                         const size = box.getSize(new THREE.Vector3());
                         
-                        // Pusatkan posisi 3D di tengah layar
                         object.position.x = -center.x;
                         object.position.y = -center.y;
                         object.position.z = -center.z;
                         
-                        // Perbesar/perkecil otomatis agar pas dengan kamera (Skala)
+                        // Memastikan ukuran board tidak terlalu besar/kecil di layar
                         const maxDim = Math.max(size.x, size.y, size.z);
-                        const scale = 12 / maxDim; // Angka 12 adalah ukuran ideal kamera kita
+                        const scale = 12 / maxDim; // Skala patokan
                         object.scale.set(scale, scale, scale);
 
                         boardGroup.add(object);
-                        boardGroup.rotation.set(0.5, 0.5, 0); // Posisi miring yang elegan
+                        boardGroup.rotation.set(Math.PI / 4, Math.PI / 4, 0); // Miring elegan
+                        
+                        loadingOverlay.classList.remove('active');
+                    }, 
+                    // Progress callback
+                    function (xhr) {
+                        if (xhr.lengthComputable) {
+                            const percentComplete = xhr.loaded / xhr.total * 100;
+                            loadingText.innerText = "Loading Model: " + Math.round(percentComplete, 2) + "%";
+                        }
+                    },
+                    // Error callback
+                    function (error) {
+                        console.error('An error happened loading OBJ', error);
+                        loadingText.innerText = "Error Loading Model!";
+                        setTimeout(() => loadingOverlay.classList.remove('active'), 2000);
+                        generateDummyBoard(colorHex); // Fallback ke simulasi jika error
                     });
+                }, undefined, function (error) {
+                    console.error('An error happened loading MTL', error);
+                    generateDummyBoard(colorHex);
                 });
             } 
-            // Jika file 3D Asli TIDAK ADA, gunakan simulasi balok-balok 3D
+            // JIKA TIDAK ADA FILE 3D ASLI (Buat simulasi balok)
             else {
-                const boardGeo = new THREE.BoxGeometry(10, 0.15, 6);
-                const boardMat = new THREE.MeshStandardMaterial({ 
-                    color: colorHex || 0x065F46, 
-                    roughness: 0.6, metalness: 0.2
-                });
-                const board = new THREE.Mesh(boardGeo, boardMat);
-                boardGroup.add(board);
-
-                const padGeo = new THREE.CylinderGeometry(0.2, 0.2, 0.16, 16);
-                const padMat = new THREE.MeshStandardMaterial({ color: 0xFFD700, metalness: 0.8, roughness: 0.2 });
-                const padPositions = [ [-4.5, 2.5], [4.5, 2.5], [-4.5, -2.5], [4.5, -2.5] ];
-                padPositions.forEach(pos => {
-                    const pad = new THREE.Mesh(padGeo, padMat);
-                    pad.position.set(pos[0], 0, pos[1]);
-                    boardGroup.add(pad);
-                });
-
-                const icGeo = new THREE.BoxGeometry(1.2, 0.2, 1.2);
-                const icMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 }); 
-                const capGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.5, 16);
-                const capMat = new THREE.MeshStandardMaterial({ color: 0x1d4ed8, roughness: 0.4 }); 
-                const resistorGeo = new THREE.BoxGeometry(0.4, 0.1, 0.2);
-                const resistorMat = new THREE.MeshStandardMaterial({ color: 0x000000 }); 
-
-                for(let i=0; i<4; i++) {
-                    const ic = new THREE.Mesh(icGeo, icMat);
-                    ic.position.set((Math.random() - 0.5) * 8, 0.15, (Math.random() - 0.5) * 4);
-                    boardGroup.add(ic);
-                }
-                for(let i=0; i<6; i++) {
-                    const cap = new THREE.Mesh(capGeo, capMat);
-                    cap.position.set((Math.random() - 0.5) * 8, 0.3, (Math.random() - 0.5) * 4);
-                    boardGroup.add(cap);
-                }
-                for(let i=0; i<20; i++) {
-                    const res = new THREE.Mesh(resistorGeo, resistorMat);
-                    res.position.set((Math.random() - 0.5) * 9, 0.1, (Math.random() - 0.5) * 5);
-                    boardGroup.add(res);
-                }
-
-                boardGroup.rotation.set(0.2, -0.5, 0); 
+                generateDummyBoard(colorHex);
             }
+        }
+
+        // Fungsi Simulasi 3D jika belum di-upload file OBJ-nya
+        function generateDummyBoard(colorHex) {
+            const boardGeo = new THREE.BoxGeometry(10, 0.15, 6);
+            const boardMat = new THREE.MeshStandardMaterial({ color: colorHex || 0x065F46, roughness: 0.6, metalness: 0.2 });
+            const board = new THREE.Mesh(boardGeo, boardMat);
+            boardGroup.add(board);
+
+            const icGeo = new THREE.BoxGeometry(1.2, 0.2, 1.2);
+            const icMat = new THREE.MeshStandardMaterial({ color: 0x111111 }); 
+            const capGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.5, 16);
+            const capMat = new THREE.MeshStandardMaterial({ color: 0x1d4ed8 }); 
+
+            for(let i=0; i<4; i++) {
+                const ic = new THREE.Mesh(icGeo, icMat);
+                ic.position.set((Math.random() - 0.5) * 8, 0.15, (Math.random() - 0.5) * 4);
+                boardGroup.add(ic);
+            }
+            for(let i=0; i<6; i++) {
+                const cap = new THREE.Mesh(capGeo, capMat);
+                cap.position.set((Math.random() - 0.5) * 8, 0.3, (Math.random() - 0.5) * 4);
+                boardGroup.add(cap);
+            }
+            boardGroup.rotation.set(0.2, -0.5, 0); 
         }
 
         function animate3D() {
             requestAnimationFrame(animate3D);
-            controls.update(); // Update responsivitas putaran mouse
-            
-            // Putar secara perlahan otomatis layaknya di pameran/etalase
-            boardGroup.rotation.y += 0.003; 
-            
+            controls.update(); 
+            // boardGroup.rotation.y += 0.002; // Uncomment jika ingin PCB berputar sendiri perlahan
             renderer.render(scene, camera);
         }
 
-        let currentProject = 'ats'; // Proyek yang dimuat pertama kali
-
-        function getImagesForProject(id) {
-            return projectsData[id].images;
-        }
+        let currentProject = 'pemanas'; 
 
         function changeView(viewType) {
             const imgElement = document.getElementById('board-image');
@@ -578,25 +500,20 @@
                 canvas3D.style.opacity = '1';
                 
                 const projectColor = projectsData[currentProject].color || 0x065F46;
-                // TAMBAHAN: Kita sekarang mengirim 'currentProject' ke fungsi generate
                 generate3DBoard(currentProject, projectColor);
             } else {
-                // Tampilkan Foto 2D, Sembunyikan Canvas 3D
                 canvas3D.style.opacity = '0';
                 setTimeout(() => canvas3D.classList.add('hidden'), 300);
                 imgElement.classList.remove('hidden');
 
-                // Trigger ulang animasi transisi gambar
                 imgElement.classList.remove('fade-img');
-                void imgElement.offsetWidth; // trigger reflow
+                void imgElement.offsetWidth;
                 imgElement.classList.add('fade-img');
                 
-                // Panggil source gambar berdasarkan proyek
-                const images = getImagesForProject(currentProject);
+                const images = projectsData[currentProject].images;
                 imgElement.src = images[viewType];
             }
 
-            // Ubah gaya warna tombol yang sedang diklik
             buttons.forEach(btn => {
                 if(btn.id === 'btn-' + viewType) {
                     btn.className = 'view-btn px-4 py-2 rounded-full text-sm font-medium bg-copper text-black transition-colors';
@@ -610,7 +527,6 @@
             currentProject = projectId;
             const data = projectsData[projectId];
 
-            // Update teks dan spesifikasi di panel sebelah kanan
             document.getElementById('feat-type').innerText = data.type;
             document.getElementById('feat-title').innerText = data.title;
             document.getElementById('feat-desc').innerText = data.desc;
@@ -619,16 +535,14 @@
             document.getElementById('spec-trace').innerText = data.trace;
             document.getElementById('spec-software').innerText = data.software;
 
-            // Scroll perlahan ke atas (ke arah Viewer)
+            // Scroll ke layar viewer
             document.getElementById('pcb-showcase').scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-            // Otomatis kembalikan layar ke mode 3D untuk desain yang baru dipilih
             changeView('3d');
         }
 
-        // Jalankan inisiasi pertama kali saat web dimuat
         window.onload = () => {
-            selectBoard('ats');
+            selectBoard('pemanas'); // Otomatis buka Pemanas saat web dimuat
         };
     </script>
 </body>
