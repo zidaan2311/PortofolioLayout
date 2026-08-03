@@ -176,11 +176,11 @@
                     <h4 class="text-white font-bold mb-1">PCB ATS</h4>
                 </div>
                 <div onclick="selectBoard('timbangan')" class="bg-panel p-4 rounded-xl border border-white/5 hover:border-copper/50 transition-all cursor-pointer">
-                    <div class="h-32 bg-dark rounded-lg mb-4 overflow-hidden relative"><img src="timbangan-3d.png" onerror="this.src='https://placehold.co/400x300/171717/3b82f6?text=Timbangan'" alt="Timbangan" class="w-full h-full object-cover"></div>
+                    <div class="h-32 bg-dark rounded-lg mb-4 overflow-hidden relative"><img src="timbangan-top.png" onerror="this.src='https://placehold.co/400x300/171717/3b82f6?text=Timbangan'" alt="Timbangan" class="w-full h-full object-cover"></div>
                     <h4 class="text-white font-bold mb-1">PCB Timbangan Digital</h4>
                 </div>
                 <div onclick="selectBoard('rfid')" class="bg-panel p-4 rounded-xl border border-white/5 hover:border-copper/50 transition-all cursor-pointer">
-                    <div class="h-32 bg-dark rounded-lg mb-4 overflow-hidden relative"><img src="rfid-3d.png" onerror="this.src='https://placehold.co/400x300/171717/10b981?text=RFID'" alt="RFID" class="w-full h-full object-cover"></div>
+                    <div class="h-32 bg-dark rounded-lg mb-4 overflow-hidden relative"><img src="rfid-top.png" onerror="this.src='https://placehold.co/400x300/171717/10b981?text=RFID'" alt="RFID" class="w-full h-full object-cover"></div>
                     <h4 class="text-white font-bold mb-1">PCB RFID</h4>
                 </div>
                 <div onclick="selectBoard('meteran')" class="bg-panel p-4 rounded-xl border border-white/5 hover:border-copper/50 transition-all cursor-pointer">
@@ -215,14 +215,14 @@
                 type: 'Analog & ADC', title: 'PCB Timbangan Digital',
                 desc: 'Papan antarmuka ADC presisi tinggi untuk sensor Load Cell (HX711/Setara).',
                 layers: '2-Layer', finish: 'ENIG (Gold)', trace: '6 mil / 6 mil', software: 'KiCad', color: 0x3b82f6, 
-                model3D: { obj: null, mtl: null },
+                model3D: { obj: 'timbangan-3d.obj', mtl: 'timbangan-3d.mtl' },
                 images: { '3d': 'timbangan-3d.png', 'top': 'timbangan-top.png', 'bottom': 'timbangan-bot.png', 'schematic': 'timbangan-sch.png' }
             },
             'rfid': {
                 type: 'Access Control', title: 'PCB RFID',
                 desc: 'Modul pembaca kartu akses RFID / NFC untuk sistem keamanan pintu pintar.',
                 layers: '2-Layer', finish: 'HASL', trace: '8 mil / 8 mil', software: 'EasyEDA', color: 0x10b981,
-                model3D: { obj: null, mtl: null },
+                model3D: { obj: 'rfid-3d.obj', mtl: 'rfid-3d.mtl' },
                 images: { '3d': 'rfid-3d.png', 'top': 'rfid-top.png', 'bottom': 'rfid-bot.png', 'schematic': 'rfid-sch.png' }
             },
             'meteran': {
@@ -236,7 +236,7 @@
                 type: 'Display Interface', title: 'PCB LED Meteran Air',
                 desc: 'Papan antarmuka (Display Board) khusus untuk menampilkan volume air secara visual.',
                 layers: '2-Layer', finish: 'HASL', trace: '12 mil / 12 mil', software: 'EasyEDA', color: 0x14b8a6,
-                model3D: { obj: null, mtl: null },
+                model3D: { obj: 'ledmeteran-3d.obj', mtl: 'ledmeteran-3d.mtl' },
                 images: { '3d': 'ledmeteran-3d.png', 'top': 'ledmeteran-top.png', 'bottom': 'ledmeteran-bot.png', 'schematic': 'ledmeteran-sch.png' }
             }
         };
@@ -261,7 +261,6 @@
             const container = document.getElementById('canvas-3d');
             scene = new THREE.Scene();
             
-            // Kamera sedikit dijauhkan
             camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
             camera.position.set(0, 25, 25);
             
@@ -282,6 +281,10 @@
             const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
             dirLight.position.set(20, 30, 20);
             scene.add(dirLight);
+            
+            const backLight = new THREE.DirectionalLight(0xffffff, 0.5);
+            backLight.position.set(-20, -30, -20);
+            scene.add(backLight);
 
             boardGroup = new THREE.Group();
             scene.add(boardGroup);
@@ -324,7 +327,7 @@
 
         function generate3DBoard(projectId, colorHex) {
             if (!is3DInitialized) {
-                if(!init3D()) return; // Stop jika WebGL diblokir
+                if(!init3D()) return; 
             }
 
             while(boardGroup.children.length > 0){ boardGroup.remove(boardGroup.children[0]); }
@@ -341,7 +344,6 @@
             overlay.classList.add('active');
             loadText.innerText = "Mengecek Server...";
 
-            // SISTEM FETCH ANTI-NYANGKUT
             fetch(project.model3D.obj)
             .then(res => {
                 if (!res.ok) throw new Error("File OBJ tidak ditemukan (404)");
@@ -351,56 +353,45 @@
                 if (text.includes("<!DOCTYPE html>")) throw new Error("URL salah, mengembalikan halaman HTML");
                 
                 loadText.innerText = "Merender OBJ...";
-                const objLoader = new THREE.OBJLoader();
                 
-                // Load obj langsung
-                objLoader.load(project.model3D.obj, function(object) {
-                    
-                    // Beri warna default jika mtl gagal
-                    const defaultMat = new THREE.MeshStandardMaterial({ color: colorHex, roughness: 0.5 });
-                    object.traverse(function(child) {
-                        if (child.isMesh && (!child.material || child.material.length === 0)) {
-                            child.material = defaultMat;
-                        }
-                    });
-
-                    // PERHITUNGAN SKALA ANTI-MENGHILANG
-                    const box = new THREE.Box3().setFromObject(object);
-                    const size = new THREE.Vector3();
-                    box.getSize(size);
-                    
-                    const maxDim = Math.max(size.x, size.y, size.z);
-                    if (maxDim > 0 && maxDim !== Infinity) {
-                        const scale = 18 / maxDim; // Paksa max panjang 18 unit (Terlihat pas di layar)
-                        object.scale.set(scale, scale, scale);
-                    }
-
-                    // Tengahkan objek setelah diskala
-                    const box2 = new THREE.Box3().setFromObject(object);
-                    const center = new THREE.Vector3();
-                    box2.getCenter(center);
-                    object.position.set(-center.x, -center.y, -center.z);
-
-                    // Masukkan ke pivot
-                    const pivot = new THREE.Group();
-                    pivot.add(object);
-                    boardGroup.add(pivot);
-                    
-                    // Putar sedikit agar enak dilihat
-                    boardGroup.rotation.set(Math.PI/4, Math.PI/6, 0); 
-                    overlay.classList.remove('active');
-
-                }, 
-                function(xhr) {
-                    if(xhr.lengthComputable) {
-                        loadText.innerText = `Memuat: ${Math.round(xhr.loaded / xhr.total * 100)}%`;
-                    } else {
-                        loadText.innerText = `Membaca data...`;
-                    }
-                }, 
-                function(err) {
-                    generateDummyBoard(colorHex);
+                const objLoader = new THREE.OBJLoader();
+                const object = objLoader.parse(text);
+                
+                // SOLUSI: Memaksa kedua sisi (luar dan dalam) untuk dirender agar tidak tembus pandang
+                const defaultMat = new THREE.MeshLambertMaterial({ 
+                    color: colorHex, 
+                    side: THREE.DoubleSide
                 });
+                
+                object.traverse(function(child) {
+                    if (child.isMesh) {
+                        child.material = defaultMat;
+                    }
+                });
+
+                const box = new THREE.Box3().setFromObject(object);
+                const size = new THREE.Vector3();
+                box.getSize(size);
+                
+                const maxDim = Math.max(size.x, size.y, size.z);
+                if (maxDim > 0 && maxDim !== Infinity) {
+                    const scale = 18 / maxDim; 
+                    object.scale.set(scale, scale, scale);
+                }
+
+                object.updateMatrixWorld();
+
+                const box2 = new THREE.Box3().setFromObject(object);
+                const center = new THREE.Vector3();
+                box2.getCenter(center);
+                object.position.set(-center.x, -center.y, -center.z);
+
+                const pivot = new THREE.Group();
+                pivot.add(object);
+                boardGroup.add(pivot);
+                
+                boardGroup.rotation.set(Math.PI/4, Math.PI/6, 0); 
+                overlay.classList.remove('active');
             })
             .catch(err => {
                 console.log("Fallback 3D aktif:", err.message);
@@ -433,7 +424,7 @@
                     this.src = `https://placehold.co/1000x700/171717/F59E0B?text=${viewType.toUpperCase()}+Layer+Belum+Ada`;
                 };
             }
-            btns.forEach(btn => btn.className = btn.id === 'btn-'+viewType ? 'view-btn px-4 py-2 rounded-full text-sm font-medium bg-copper text-black' : 'view-btn px-4 py-2 rounded-full text-sm font-medium text-gray-400 hover:text-white');
+            btns.forEach(btn => btn.className = btn.id === 'btn-'+viewType ? 'view-btn px-4 py-2 rounded-full text-sm font-medium bg-copper text-black transition-colors' : 'view-btn px-4 py-2 rounded-full text-sm font-medium text-gray-400 hover:text-white transition-colors');
         }
 
         function selectBoard(projectId) {
@@ -450,11 +441,3 @@
     </script>
 </body>
 </html>
-```
-
-### 💡 Tips Sangat Penting Setelah Menyimpan (Commit):
-Setelah Anda menekan *Commit changes* di GitHub:
-1. Buka halaman website portofolio Anda.
-2. Karena browser sering menyimpan "ingatan" (Cache) tentang kode Anda yang lama (yang error tadi), Anda **wajib membersihkan cache-nya.**
-3. Caranya: Tekan tombol **`Ctrl` + `F5`** atau **`Ctrl` + `Shift` + `R`** secara bersamaan di keyboard Anda.
-4. Perhatikan layar hitamnya. Apakah muncul papan PCB dummy? Ataukah muncul file 3D asli Anda? Atau muncul layar peringatan merah? Beritahu saya hasilnya!
