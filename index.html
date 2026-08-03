@@ -1,1 +1,424 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zidaan | Hardware & PCB Designer</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts (Inter for UI, JetBrains Mono for Tech Specs) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'sans-serif'],
+                        'mono': ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        dark: '#0a0a0a',        // Very dark background
+                        darker: '#050505',
+                        panel: '#171717',       // Dark gray for cards
+                        copper: '#F59E0B',      // PCB Copper/Gold finish color
+                        'pcb-green': '#065F46', // Classic PCB solder mask green
+                        'solder': '#9CA3AF'     // Silver/gray solder color
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #d1d5db;
+        }
 
+        /* Dot Grid Background resembling a breadboard or perfboard */
+        .bg-perfboard {
+            background-image: radial-gradient(#333 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+
+        /* Copper trace subtle background line */
+        .copper-trace {
+            position: relative;
+        }
+        .copper-trace::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 60px;
+            height: 2px;
+            background-color: #F59E0B;
+            transition: width 0.3s ease;
+        }
+        .group:hover .copper-trace::after {
+            width: 100%;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #F59E0B; }
+
+        /* Smooth fade for image transitions */
+        .fade-img {
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="bg-perfboard antialiased selection:bg-copper selection:text-black">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 bg-dark/90 backdrop-blur-md border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-layer-group text-copper text-xl"></i>
+                    <span class="font-bold text-white text-xl tracking-tight">ZIDAAN<span class="text-copper">.</span></span>
+                </div>
+                <div class="hidden md:flex space-x-8 font-medium text-sm text-gray-400">
+                    <a href="#hero" class="hover:text-copper transition-colors">Home</a>
+                    <a href="#pcb-showcase" class="text-white hover:text-copper transition-colors">PCB Layouts</a>
+                    <a href="#projects" class="hover:text-copper transition-colors">Hardware Projects</a>
+                    <a href="#contact" class="hover:text-copper transition-colors">Contact</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-20">
+        
+        <!-- Hero Section -->
+        <section id="hero" class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-32">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div>
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-copper/10 border border-copper/20 text-copper font-mono text-xs mb-6">
+                        <span class="w-2 h-2 rounded-full bg-copper animate-pulse"></span>
+                        HARDWARE & PCB DESIGNER
+                    </div>
+                    <h1 class="text-5xl md:text-7xl font-bold text-white leading-tight mb-6">
+                        Designing the <br>
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-copper to-yellow-200">Physical Layer</span><br>
+                        of Technology.
+                    </h1>
+                    <p class="text-lg text-gray-400 mb-8 max-w-lg leading-relaxed">
+                        Spesialisasi dalam merancang skematik, *routing* PCB berkecepatan tinggi, dan firmware untuk sistem embedded industri dan IoT.
+                    </p>
+                    <div class="flex gap-4">
+                        <a href="#pcb-showcase" class="px-6 py-3 bg-white text-black font-semibold rounded hover:bg-copper transition-colors flex items-center gap-2">
+                            View PCB Layouts <i class="fas fa-arrow-down"></i>
+                        </a>
+                        <a href="https://github.com" target="_blank" class="px-6 py-3 border border-gray-700 text-white rounded hover:border-gray-500 transition-colors flex items-center gap-2">
+                            <i class="fab fa-github text-xl"></i> GitHub
+                        </a>
+                    </div>
+                </div>
+                <!-- Abstract Hero Image (Placeholder for a 3D board render) -->
+                <div class="relative hidden lg:block">
+                    <div class="absolute inset-0 bg-copper/20 blur-[100px] rounded-full"></div>
+                    <img src="https://placehold.co/600x600/171717/F59E0B?text=Hero+3D+PCB+Render\n(Drop+your+transparent+PNG+here)" alt="3D PCB Render" class="relative z-10 rounded-xl border border-white/10 shadow-2xl shadow-black">
+                </div>
+            </div>
+        </section>
+
+        <!-- PCB SHOWCASE SECTION (THE CORE REQUEST) -->
+        <section id="pcb-showcase" class="bg-darker py-24 border-y border-white/5">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                
+                <div class="mb-16">
+                    <h2 class="text-3xl md:text-4xl font-bold text-white mb-4 copper-trace inline-block">Featured PCB Layout</h2>
+                    <p class="text-gray-400 mt-4 max-w-2xl">Presentasi detail rancangan papan sirkuit cetak. Gunakan kontrol di bawah untuk meninjau lapisan berbeda dari papan.</p>
+                </div>
+
+                <!-- Showcase Main Container -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 bg-panel rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
+                    
+                    <!-- Left Side: Interactive Viewer -->
+                    <div class="lg:col-span-8 relative bg-[#111] p-4 flex flex-col justify-center items-center min-h-[400px] md:min-h-[600px]">
+                        <!-- Image Viewer Area -->
+                        <div class="w-full h-full flex items-center justify-center overflow-hidden rounded-lg">
+                            <img id="board-image" src="https://placehold.co/1000x700/065F46/FFFFFF?text=3D+Board+Render\n(Tampilan+3D+Asli)" alt="PCB View" class="w-full object-contain max-h-[600px] fade-img">
+                        </div>
+
+                        <!-- Viewer Controls -->
+                        <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-black/80 backdrop-blur-md px-2 py-2 rounded-full border border-white/10 flex gap-2">
+                            <button onclick="changeView('3d')" id="btn-3d" class="view-btn px-4 py-2 rounded-full text-sm font-medium bg-copper text-black transition-colors">3D View</button>
+                            <button onclick="changeView('top')" id="btn-top" class="view-btn px-4 py-2 rounded-full text-sm font-medium text-gray-400 hover:text-white transition-colors">Top Layer</button>
+                            <button onclick="changeView('bottom')" id="btn-bottom" class="view-btn px-4 py-2 rounded-full text-sm font-medium text-gray-400 hover:text-white transition-colors">Bottom Layer</button>
+                            <button onclick="changeView('schematic')" id="btn-schematic" class="view-btn px-4 py-2 rounded-full text-sm font-medium text-gray-400 hover:text-white transition-colors">Schematic</button>
+                        </div>
+                    </div>
+
+                    <!-- Right Side: Specs & Info -->
+                    <div class="lg:col-span-4 p-8 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center gap-2 text-copper text-sm font-mono mb-4">
+                                <i class="fas fa-microchip"></i> <span id="feat-type">Power Management Board</span>
+                            </div>
+                            <h3 id="feat-title" class="text-2xl font-bold text-white mb-4">PCB ATS (Auto Transfer Switch)</h3>
+                            <p id="feat-desc" class="text-gray-400 text-sm mb-8 leading-relaxed">
+                                Sistem pemindah daya otomatis untuk mengalihkan sumber listrik dari PLN ke Generator/Baterai secara instan tanpa jeda panjang, dilengkapi proteksi arus lebih.
+                            </p>
+                            
+                            <!-- Tech Specs Table -->
+                            <div class="space-y-4">
+                                <h4 class="text-white font-semibold text-sm uppercase tracking-wider mb-2 border-b border-gray-800 pb-2">Board Specifications</h4>
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-gray-500">Layers</span>
+                                    <span id="spec-layers" class="text-white font-mono bg-dark px-2 py-1 rounded">4-Layer (High Voltage)</span>
+                                </div>
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-gray-500">Material</span>
+                                    <span class="text-white font-mono bg-dark px-2 py-1 rounded">FR-4, TG150, 1.6mm</span>
+                                </div>
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-gray-500">Min Trace / Space</span>
+                                    <span id="spec-trace" class="text-white font-mono bg-dark px-2 py-1 rounded">15 mil / 15 mil</span>
+                                </div>
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-gray-500">Surface Finish</span>
+                                    <span id="spec-finish" class="text-white font-mono bg-dark px-2 py-1 rounded">HASL Lead-Free</span>
+                                </div>
+                                <div class="flex justify-between items-center text-sm">
+                                    <span class="text-gray-500">Software</span>
+                                    <span id="spec-software" class="text-copper font-mono bg-copper/10 px-2 py-1 rounded">Altium Designer</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-12">
+                            <a href="#" class="block w-full py-3 px-4 bg-white text-black text-center font-semibold rounded hover:bg-copper transition-colors">
+                                <i class="fab fa-github mr-2"></i> View Gerber & Source
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Secondary Boards Grid -->
+        <section class="py-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h3 class="text-xl font-bold text-white mb-2 border-l-4 border-copper pl-4">Koleksi Desain Layout PCB</h3>
+            <p class="text-gray-400 mb-8 ml-5 text-sm">Klik pada kartu di bawah ini untuk melihat detail desain pada layar utama di atas.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Board 1: ATS -->
+                <div onclick="selectBoard('ats')" class="bg-panel p-4 rounded-xl border border-white/5 group hover:border-copper/50 transition-all cursor-pointer hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(245,158,11,0.1)]">
+                    <div class="h-40 bg-dark rounded-lg mb-4 overflow-hidden relative">
+                        <img src="https://placehold.co/400x300/171717/F59E0B?text=PCB+ATS" alt="ATS" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    </div>
+                    <h4 class="text-white font-bold mb-1">PCB ATS</h4>
+                    <p class="text-gray-500 text-sm font-mono">Auto Transfer Switch</p>
+                </div>
+                
+                <!-- Board 2: Timbangan -->
+                <div onclick="selectBoard('timbangan')" class="bg-panel p-4 rounded-xl border border-white/5 group hover:border-copper/50 transition-all cursor-pointer hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(59,130,246,0.1)]">
+                    <div class="h-40 bg-dark rounded-lg mb-4 overflow-hidden relative">
+                        <img src="https://placehold.co/400x300/171717/3b82f6?text=PCB+Timbangan" alt="Timbangan" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    </div>
+                    <h4 class="text-white font-bold mb-1">PCB Timbangan Digital</h4>
+                    <p class="text-gray-500 text-sm font-mono">Load Cell / ADC HX711</p>
+                </div>
+
+                <!-- Board 3: RFID -->
+                <div onclick="selectBoard('rfid')" class="bg-panel p-4 rounded-xl border border-white/5 group hover:border-copper/50 transition-all cursor-pointer hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(16,185,129,0.1)]">
+                    <div class="h-40 bg-dark rounded-lg mb-4 overflow-hidden relative">
+                        <img src="https://placehold.co/400x300/171717/10b981?text=PCB+RFID" alt="RFID" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    </div>
+                    <h4 class="text-white font-bold mb-1">PCB RFID Reader</h4>
+                    <p class="text-gray-500 text-sm font-mono">13.56MHz Access Control</p>
+                </div>
+
+                <!-- Board 4: Layar Pemanas -->
+                <div onclick="selectBoard('pemanas')" class="bg-panel p-4 rounded-xl border border-white/5 group hover:border-copper/50 transition-all cursor-pointer hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(239,68,68,0.1)]">
+                    <div class="h-40 bg-dark rounded-lg mb-4 overflow-hidden relative">
+                        <img src="https://placehold.co/400x300/171717/ef4444?text=Layar+Pemanas" alt="Pemanas" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    </div>
+                    <h4 class="text-white font-bold mb-1">PCB Layar Pemanas</h4>
+                    <p class="text-gray-500 text-sm font-mono">HMI & Heater Driver</p>
+                </div>
+
+                <!-- Board 5: Meteran Air -->
+                <div onclick="selectBoard('meteran')" class="bg-panel p-4 rounded-xl border border-white/5 group hover:border-copper/50 transition-all cursor-pointer hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(139,92,246,0.1)]">
+                    <div class="h-40 bg-dark rounded-lg mb-4 overflow-hidden relative">
+                        <img src="https://placehold.co/400x300/171717/8b5cf6?text=Meteran+Air" alt="Meteran Air" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    </div>
+                    <h4 class="text-white font-bold mb-1">PCB Meteran Air</h4>
+                    <p class="text-gray-500 text-sm font-mono">IoT Smart Water Meter</p>
+                </div>
+
+                <!-- Board 6: LED Meteran -->
+                <div onclick="selectBoard('led-meteran')" class="bg-panel p-4 rounded-xl border border-white/5 group hover:border-copper/50 transition-all cursor-pointer hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(14,165,233,0.1)]">
+                    <div class="h-40 bg-dark rounded-lg mb-4 overflow-hidden relative">
+                        <img src="https://placehold.co/400x300/171717/0ea5e9?text=LED+Meteran" alt="LED Meteran" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                    </div>
+                    <h4 class="text-white font-bold mb-1">PCB LED Meteran Air</h4>
+                    <p class="text-gray-500 text-sm font-mono">Display Segmen / Matriks</p>
+                </div>
+            </div>
+        </section>
+
+        <footer id="contact" class="bg-darker border-t border-white/5 py-12 mt-12">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                <i class="fas fa-microchip text-4xl text-gray-800 mb-6"></i>
+                <h2 class="text-2xl font-bold text-white mb-6">Siap merancang perangkat keras Anda?</h2>
+                <a href="mailto:email@example.com" class="inline-flex items-center gap-2 px-6 py-3 border border-copper text-copper rounded hover:bg-copper hover:text-black transition-colors mb-8 font-semibold">
+                    <i class="fas fa-envelope"></i> Hubungi Saya
+                </a>
+                <div class="flex justify-center gap-6 text-gray-500">
+                    <a href="#" class="hover:text-white transition-colors text-xl"><i class="fab fa-github"></i></a>
+                    <a href="#" class="hover:text-white transition-colors text-xl"><i class="fab fa-linkedin"></i></a>
+                    <a href="#" class="hover:text-white transition-colors text-xl"><i class="fab fa-twitter"></i></a>
+                </div>
+                <p class="mt-8 text-gray-600 text-sm font-mono">
+                    © 2026 Zidaan Electronics. Crafted with precision.
+                </p>
+            </div>
+        </footer>
+
+    </main>
+
+    <script>
+        // Database proyek PCB Anda dengan spesifikasi masing-masing
+        const projectsData = {
+            'ats': {
+                type: 'Power Management Board',
+                title: 'PCB ATS (Auto Transfer Switch)',
+                desc: 'Sistem pemindah daya otomatis untuk mengalihkan sumber listrik dari PLN ke Generator/Baterai secara instan tanpa jeda panjang, dilengkapi proteksi arus lebih dan monitoring tegangan.',
+                layers: '4-Layer (High Voltage)',
+                finish: 'HASL Lead-Free',
+                trace: '15 mil / 15 mil',
+                software: 'Altium Designer',
+                color: 'F59E0B' // Amber/Copper
+            },
+            'timbangan': {
+                type: 'Load Cell Interface',
+                title: 'PCB Timbangan Digital',
+                desc: 'Papan antarmuka ADC presisi tinggi untuk sensor Load Cell (HX711/Setara). Didesain dengan pemisahan jalur ground analog dan digital (Star Grounding) untuk meminimalisir noise sinyal mikrovolt.',
+                layers: '2-Layer',
+                finish: 'ENIG (Gold)',
+                trace: '6 mil / 6 mil',
+                software: 'KiCad 7.0',
+                color: '3b82f6' // Blue
+            },
+            'rfid': {
+                type: 'Access Control Module',
+                title: 'PCB RFID Reader',
+                desc: 'Modul pembaca kartu RFID (13.56MHz / 125kHz) terintegrasi dengan antena internal melingkar di atas PCB. Desain jalur RF yang dioptimalkan untuk memaksimalkan jarak baca tag.',
+                layers: '2-Layer',
+                finish: 'HASL',
+                trace: '8 mil / 8 mil',
+                software: 'Altium Designer',
+                color: '10b981' // Green
+            },
+            'pemanas': {
+                type: 'HMI & Controller',
+                title: 'PCB Layar Pemanas',
+                desc: 'Modul antarmuka layar (Display HMI) yang digabungkan dengan driver pengontrol elemen pemanas (Heater). Dilengkapi sirkuit isolasi optocoupler untuk keamanan pengguna dari tegangan tinggi.',
+                layers: '2-Layer',
+                finish: 'HASL',
+                trace: '10 mil / 10 mil',
+                software: 'KiCad 7.0',
+                color: 'ef4444' // Red
+            },
+            'meteran': {
+                type: 'IoT Smart Meter',
+                title: 'PCB Meteran Air',
+                desc: 'Papan utama (Motherboard) untuk sistem meteran air pintar. Membaca sensor aliran air (flow meter), mengolah data konsumsi, dan mentransmisikan data secara nirkabel melalui WiFi atau LoRa.',
+                layers: '4-Layer',
+                finish: 'ENIG (Gold)',
+                trace: '5 mil / 5 mil',
+                software: 'KiCad 7.0',
+                color: '8b5cf6' // Purple
+            },
+            'led-meteran': {
+                type: 'Visual Display Board',
+                title: 'PCB LED Meteran Air',
+                desc: 'Papan sirkuit tambahan (Daughter board) yang berisi matriks LED atau indikator visual 7-segment. Didesain dengan IC Shift Register untuk kecerahan tinggi agar mudah dibaca di lingkungan outdoor.',
+                layers: '2-Layer',
+                finish: 'HASL',
+                trace: '8 mil / 8 mil',
+                software: 'Eagle / KiCad',
+                color: '0ea5e9' // Sky Blue
+            }
+        };
+
+        let currentProject = 'ats'; // Proyek yang dimuat pertama kali
+
+        function getImagesForProject(id) {
+            const color = projectsData[id].color;
+            const name = projectsData[id].title.replace(/ /g, '+');
+            // Menghasilkan placeholder dinamis sesuai nama dan warna proyek
+            return {
+                '3d': `https://placehold.co/1000x700/065F46/FFFFFF?text=${name}+%5Bn3D+Render%5D`,
+                'top': `https://placehold.co/1000x700/222222/${color}?text=${name}+%5BnTop+Layer%5D`,
+                'bottom': `https://placehold.co/1000x700/222222/${color}?text=${name}+%5BnBottom+Layer%5D`,
+                'schematic': `https://placehold.co/1000x700/FFFFFF/000000?text=${name}+%5BnSchematic+Diagram%5D`
+            };
+        }
+
+        function changeView(viewType) {
+            const imgElement = document.getElementById('board-image');
+            const buttons = document.querySelectorAll('.view-btn');
+            
+            // Re-trigger animasi fade in
+            imgElement.classList.remove('fade-img');
+            void imgElement.offsetWidth; // trigger reflow
+            imgElement.classList.add('fade-img');
+            
+            // Ganti source gambar berdasarkan proyek yang aktif
+            const images = getImagesForProject(currentProject);
+            imgElement.src = images[viewType];
+
+            // Update style tombol
+            buttons.forEach(btn => {
+                if(btn.id === 'btn-' + viewType) {
+                    btn.className = 'view-btn px-4 py-2 rounded-full text-sm font-medium bg-copper text-black transition-colors';
+                } else {
+                    btn.className = 'view-btn px-4 py-2 rounded-full text-sm font-medium text-gray-400 hover:text-white transition-colors';
+                }
+            });
+        }
+
+        function selectBoard(projectId) {
+            currentProject = projectId;
+            const data = projectsData[projectId];
+
+            // Update teks dan spesifikasi di panel sebelah kanan
+            document.getElementById('feat-type').innerText = data.type;
+            document.getElementById('feat-title').innerText = data.title;
+            document.getElementById('feat-desc').innerText = data.desc;
+            document.getElementById('spec-layers').innerText = data.layers;
+            document.getElementById('spec-finish').innerText = data.finish;
+            document.getElementById('spec-trace').innerText = data.trace;
+            document.getElementById('spec-software').innerText = data.software;
+
+            // Scroll perlahan ke atas (ke arah Viewer)
+            document.getElementById('pcb-showcase').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+            // Otomatis kembalikan layar ke mode 3D untuk desain yang baru dipilih
+            changeView('3d');
+        }
+
+        // Jalankan inisiasi pertama kali saat web dimuat
+        window.onload = () => {
+            selectBoard('ats');
+        };
+    </script>
+</body>
+</html>
