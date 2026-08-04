@@ -198,43 +198,43 @@
     <script>
         const projectsData = {
             'pemanas': {
-                type: 'HMI & Controller', title: 'PCB Layar Pemanas',
-                desc: 'Modul antarmuka layar (Display HMI) digabungkan dengan driver pengontrol elemen pemanas. Dilengkapi sirkuit isolasi optocoupler untuk keamanan dari tegangan tinggi.',
+                type: 'HMI & Controller', title: 'PCB HMI Pemanas',
+                desc: 'Merupakan modul komunikasi antara PLC dan HMI pemanas menggunakan mikrokontroler ESP32. Desain ini menggunakan IC RS485 untuk komunikasi jarak jauh yang kebal noise, serta mengintegrasikan modul step-down LM2596 untuk mengonversi tegangan 12V dari panel utama menjadi suplai daya yang aman bagi ESP32.',
                 layers: '1-Layer (Bottom)', finish: 'HASL', trace: '10 mil / 10 mil', software: 'EasyEDA', color: 0xef4444, 
                 model3D: { obj: 'pemanas-3d.obj', mtl: 'pemanas-3d.mtl' },
                 images: { '3d': 'pemanas-3d.png', 'top': null, 'bottom': 'pemanas-bot.png', 'schematic': 'pemanas-sch.png' }
             },
             'ats': {
                 type: 'Power Management', title: 'PCB ATS (Auto Transfer Switch)',
-                desc: 'Sistem pemindah daya otomatis dari PLN ke Generator. Menangani arus tinggi (High Current).',
+                desc: 'Merupakan modul kontrol Automatic Transfer Switch (ATS) berbasis ESP32 yang dirancang untuk mengelola perpindahan sumber listrik secara otomatis antara PLN dan genset. Desain ini mengintegrasikan 4-channel relay sebagai pengendali sumber listrik dan proses starter genset, dua modul PZEM-004T untuk monitoring parameter kelistrikan secara real-time, serta LCD I2C 20×4 sebagai antarmuka lokal yang menampilkan status sistem, tegangan, arus, dan proses perpindahan sumber. Sistem juga dilengkapi fitur electrical interlock, auto-restart genset, cooldown, serta komunikasi MQTT melalui Wi-Fi untuk monitoring dan kontrol jarak jauh berbasis IoT.',
                 layers: '4-Layer', finish: 'HASL Lead-Free', trace: '15 mil / 15 mil', software: 'Altium', color: 0xF59E0B, 
                 model3D: { obj: 'ats-3d.obj', mtl: 'ats-3d.mtl' },
                 images: { '3d': 'ats-3d.png', 'top': 'ats-top.png', 'bottom': 'ats-bot.png', 'schematic': 'ats-sch.png' }
             },
             'timbangan': {
-                type: 'Analog & ADC', title: 'PCB Timbangan Digital',
-                desc: 'Papan antarmuka ADC presisi tinggi untuk sensor Load Cell (HX711/Setara).',
+                type: 'Load Cell', title: 'PCB Timbangan Digital',
+                desc: 'Merupakan modul timbangan digital berbasis ESP32 yang dirancang untuk melakukan pengukuran berat secara presisi pada aplikasi penimbangan. Desain ini mengintegrasikan modul HX711 sebagai penguat sinyal dan ADC beresolusi tinggi untuk membaca load cell, LCD I2C 20×4 sebagai antarmuka lokal yang menampilkan hasil penimbangan dan status sistem, serta keypad I2C 4×4 sebagai media input pengguna untuk proses kalibrasi, pengaturan parameter, dan pengoperasian sistem. Modul juga dilengkapi antarmuka RS485 to TTL yang memungkinkan komunikasi data dengan PLC, HMI, maupun perangkat industri lainnya, sehingga memudahkan integrasi dengan sistem otomasi industri.',
                 layers: '1-Layer (Bottom)', finish: 'ENIG (Gold)', trace: '6 mil / 6 mil', software: 'KiCad', color: 0x3b82f6, 
                 model3D: { obj: 'timbangan-3d.obj', mtl: 'timbangan-3d.mtl' },
                 images: { '3d': 'timbangan-3d.png', 'top': null, 'bottom': 'timbangan-bot.png', 'schematic': 'timbangan-sch.png' }
             },
             'rfid': {
                 type: 'Access Control', title: 'PCB RFID',
-                desc: 'Modul pembaca kartu akses RFID / NFC untuk sistem keamanan pintu pintar.',
+                desc: 'Merupakan sistem kontrol akses brankas berbasis ESP32 dengan autentikasi dua faktor menggunakan RFID RC522 dan fingerprint AS608. Sistem mengendalikan solenoid door lock melalui relay serta dilengkapi buzzer sebagai indikator status autentikasi. Mekanisme verifikasi berlapis memastikan akses hanya diberikan kepada pengguna yang telah terdaftar.',
                 layers: '1-Layer (Bottom)', finish: 'HASL', trace: '8 mil / 8 mil', software: 'EasyEDA', color: 0x10b981,
                 model3D: { obj: 'rfid-3d.obj', mtl: 'rfid-3d.mtl' },
                 images: { '3d': 'rfid-3d.png', 'top': null, 'bottom': 'rfid-bot.png', 'schematic': 'rfid-sch.png' }
             },
             'meteran': {
                 type: 'IoT / Telemetry', title: 'PCB Meteran Air',
-                desc: 'Sistem pemantau debit air digital menggunakan sensor aliran (Flow Sensor) berbasis mikrokontroler.',
+                desc: 'Merupakan sistem pembacaan meteran air berbasis ESP32-S3 yang mengintegrasikan kamera OV5640 dan model OCR berbasis Edge AI untuk melakukan identifikasi digit secara lokal (on-device inference). Sistem dilengkapi LED SMD sebagai pencahayaan, OLED sebagai antarmuka lokal, serta mekanisme deep sleep untuk optimalisasi konsumsi daya. Hasil pembacaan beserta citra backup dalam format Base64 dikirim ke server melalui koneksi Wi-Fi.',
                 layers: '2-Layer', finish: 'HASL', trace: '10 mil / 10 mil', software: 'EasyEDA', color: 0x8b5cf6,
                 model3D: { obj: 'meteran-3d.obj', mtl: 'meteran-3d.mtl' },
                 images: { '3d': 'meteran-3d.png', 'top': 'meteran-top.png', 'bottom': 'meteran-bot.png', 'schematic': 'meteran-sch.png' }
             },
             'ledmeteran': {
                 type: 'Display Interface', title: 'PCB LED Meteran Air',
-                desc: 'Papan antarmuka (Display Board) khusus untuk menampilkan volume air secara visual.',
+                desc: 'Merupakan modul LED flash berbasis MOSFET yang dirancang untuk menyediakan pencahayaan berintensitas tinggi saat proses akuisisi citra oleh kamera. Desain ini memungkinkan pengendalian LED secara langsung melalui mikrokontroler sehingga menghasilkan pencahayaan yang stabil, mengurangi pengaruh kondisi cahaya lingkungan, dan meningkatkan kualitas citra untuk proses OCR.',
                 layers: '1-Layer (Top)', finish: 'HASL', trace: '12 mil / 12 mil', software: 'EasyEDA', color: 0x14b8a6,
                 model3D: { obj: 'ledmeteran-3d.obj', mtl: 'ledmeteran-3d.mtl' },
                 images: { '3d': 'ledmeteran-3d.png', 'top': 'ledmeteran-top.png', 'bottom': null, 'schematic': 'ledmeteran-sch.png' }
