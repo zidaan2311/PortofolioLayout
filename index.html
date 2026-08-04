@@ -337,7 +337,6 @@
             const project = projectsData[projectId];
             const overlay = document.getElementById('loading-overlay');
             const loadText = document.getElementById('loading-text');
-            const loadIcon = document.getElementById('loading-icon');
 
             if (!project.model3D || !project.model3D.obj) {
                 generateDummyBoard(colorHex);
@@ -345,74 +344,58 @@
             }
 
             overlay.classList.add('active');
-            overlay.style.backgroundColor = 'rgba(17, 17, 17, 0.9)';
-            loadIcon.className = "fas fa-circle-notch fa-spin text-4xl mb-4 text-copper";
-            loadText.innerHTML = "Mengecek Server...";
+            loadText.innerText = "Memuat Material (Warna)...";
 
-            fetch(project.model3D.obj)
-            .then(res => {
-                if (!res.ok) throw new Error("File OBJ tidak ditemukan (404)");
-                return res.text();
-            })
-            .then(text => {
-                if (text.includes("<!DOCTYPE html>")) throw new Error("URL salah, mengembalikan halaman HTML");
+            // 1. MEMUAT FILE .MTL (WARNA & MATERIAL) TERLEBIH DAHULU
+            const mtlLoader = new THREE.MTLLoader();
+            mtlLoader.load(project.model3D.mtl, function (materials) {
+                materials.preload();
                 
-                loadText.innerHTML = "Merender OBJ...";
+                // Memaksa warna muncul di kedua sisi objek (Fix bug EasyEDA)
+                for (const key in materials.materials) {
+                    materials.materials[key].side = THREE.DoubleSide;
+                }
+
+                loadText.innerText = "Memuat Bentuk 3D...";
                 
+                // 2. MEMUAT FILE .OBJ DENGAN WARNA YANG SUDAH DIDAPAT
                 const objLoader = new THREE.OBJLoader();
-                const object = objLoader.parse(text);
+                objLoader.setMaterials(materials);
                 
-                const defaultMat = new THREE.MeshLambertMaterial({ 
-                    color: colorHex, 
-                    side: THREE.DoubleSide
-                });
-                
-                // Cek apakah file memiliki Mesh (Bentuk 3D)
-                const box = new THREE.Box3().setFromObject(object);
-                if (box.isEmpty()) {
-                    throw new Error("File OBJ dari EasyEDA KOSONG / Tidak Valid.");
-                }
-
-                object.traverse(function(child) {
-                    if (child.isMesh) {
-                        child.material = defaultMat;
+                objLoader.load(project.model3D.obj, function (object) {
+                    const box = new THREE.Box3().setFromObject(object);
+                    if (box.isEmpty()) {
+                        generateDummyBoard(colorHex);
+                        return;
                     }
+
+                    const size = new THREE.Vector3();
+                    box.getSize(size);
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    if (maxDim > 0 && maxDim !== Infinity) {
+                        const scale = 18 / maxDim; 
+                        object.scale.set(scale, scale, scale);
+                    }
+
+                    object.updateMatrixWorld();
+                    const box2 = new THREE.Box3().setFromObject(object);
+                    const center = new THREE.Vector3();
+                    box2.getCenter(center);
+                    object.position.set(-center.x, -center.y, -center.z);
+
+                    const pivot = new THREE.Group();
+                    pivot.add(object);
+                    boardGroup.add(pivot);
+                    
+                    boardGroup.rotation.set(Math.PI/4, Math.PI/6, 0); 
+                    overlay.classList.remove('active');
+                }, undefined, function (err) {
+                    generateDummyBoard(colorHex);
                 });
 
-                const size = new THREE.Vector3();
-                box.getSize(size);
-                
-                const maxDim = Math.max(size.x, size.y, size.z);
-                if (maxDim > 0 && maxDim !== Infinity) {
-                    const scale = 18 / maxDim; 
-                    object.scale.set(scale, scale, scale);
-                }
-
-                object.updateMatrixWorld();
-
-                const box2 = new THREE.Box3().setFromObject(object);
-                const center = new THREE.Vector3();
-                box2.getCenter(center);
-                object.position.set(-center.x, -center.y, -center.z);
-
-                const pivot = new THREE.Group();
-                pivot.add(object);
-                boardGroup.add(pivot);
-                
-                boardGroup.rotation.set(Math.PI/4, Math.PI/6, 0); 
-                overlay.classList.remove('active');
-            })
-            .catch(err => {
-                console.log("Memuat Cadangan 3D karena:", err.message);
-                
-                // Menampilkan error sebentar ke layar agar ketahuan penyebabnya
-                overlay.style.backgroundColor = 'rgba(100, 0, 0, 0.9)';
-                loadIcon.className = "fas fa-exclamation-circle text-4xl mb-4 text-red-400";
-                loadText.innerHTML = "Error: " + err.message + "<br><span class='text-sm font-normal'>Memuat papan 3D simulasi...</span>";
-                
-                setTimeout(() => {
-                    generateDummyBoard(colorHex);
-                }, 2000); // Tahan pesan error 2 detik lalu munculkan 3D hijau
+            }, undefined, function (err) {
+                console.log("File MTL tidak ditemukan, beralih ke warna polos.");
+                generateDummyBoard(colorHex);
             });
         }
 
