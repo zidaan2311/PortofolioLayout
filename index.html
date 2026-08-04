@@ -200,9 +200,9 @@
             'pemanas': {
                 type: 'HMI & Controller', title: 'PCB Layar Pemanas',
                 desc: 'Modul antarmuka layar (Display HMI) digabungkan dengan driver pengontrol elemen pemanas. Dilengkapi sirkuit isolasi optocoupler untuk keamanan dari tegangan tinggi.',
-                layers: '2-Layer', finish: 'HASL', trace: '10 mil / 10 mil', software: 'EasyEDA', color: 0xef4444, 
+                layers: '1-Layer (Bottom)', finish: 'HASL', trace: '10 mil / 10 mil', software: 'EasyEDA', color: 0xef4444, 
                 model3D: { obj: 'pemanas-3d.obj', mtl: 'pemanas-3d.mtl' },
-                images: { '3d': 'pemanas-3d.png', 'top': 'pemanas-top.png', 'bottom': 'pemanas-bot.png', 'schematic': 'pemanas-sch.png' }
+                images: { '3d': 'pemanas-3d.png', 'top': null, 'bottom': 'pemanas-bot.png', 'schematic': 'pemanas-sch.png' }
             },
             'ats': {
                 type: 'Power Management', title: 'PCB ATS (Auto Transfer Switch)',
@@ -214,16 +214,16 @@
             'timbangan': {
                 type: 'Analog & ADC', title: 'PCB Timbangan Digital',
                 desc: 'Papan antarmuka ADC presisi tinggi untuk sensor Load Cell (HX711/Setara).',
-                layers: '2-Layer', finish: 'ENIG (Gold)', trace: '6 mil / 6 mil', software: 'KiCad', color: 0x3b82f6, 
+                layers: '1-Layer (Bottom)', finish: 'ENIG (Gold)', trace: '6 mil / 6 mil', software: 'KiCad', color: 0x3b82f6, 
                 model3D: { obj: 'timbangan-3d.obj', mtl: 'timbangan-3d.mtl' },
-                images: { '3d': 'timbangan-3d.png', 'top': 'timbangan-top.png', 'bottom': 'timbangan-bot.png', 'schematic': 'timbangan-sch.png' }
+                images: { '3d': 'timbangan-3d.png', 'top': null, 'bottom': 'timbangan-bot.png', 'schematic': 'timbangan-sch.png' }
             },
             'rfid': {
                 type: 'Access Control', title: 'PCB RFID',
                 desc: 'Modul pembaca kartu akses RFID / NFC untuk sistem keamanan pintu pintar.',
-                layers: '2-Layer', finish: 'HASL', trace: '8 mil / 8 mil', software: 'EasyEDA', color: 0x10b981,
+                layers: '1-Layer (Bottom)', finish: 'HASL', trace: '8 mil / 8 mil', software: 'EasyEDA', color: 0x10b981,
                 model3D: { obj: 'rfid-3d.obj', mtl: 'rfid-3d.mtl' },
-                images: { '3d': 'rfid-3d.png', 'top': 'rfid-top.png', 'bottom': 'rfid-bot.png', 'schematic': 'rfid-sch.png' }
+                images: { '3d': 'rfid-3d.png', 'top': null, 'bottom': 'rfid-bot.png', 'schematic': 'rfid-sch.png' }
             },
             'meteran': {
                 type: 'IoT / Telemetry', title: 'PCB Meteran Air',
@@ -235,9 +235,9 @@
             'ledmeteran': {
                 type: 'Display Interface', title: 'PCB LED Meteran Air',
                 desc: 'Papan antarmuka (Display Board) khusus untuk menampilkan volume air secara visual.',
-                layers: '2-Layer', finish: 'HASL', trace: '12 mil / 12 mil', software: 'EasyEDA', color: 0x14b8a6,
+                layers: '1-Layer (Top)', finish: 'HASL', trace: '12 mil / 12 mil', software: 'EasyEDA', color: 0x14b8a6,
                 model3D: { obj: 'ledmeteran-3d.obj', mtl: 'ledmeteran-3d.mtl' },
-                images: { '3d': 'ledmeteran-3d.png', 'top': 'ledmeteran-top.png', 'bottom': 'ledmeteran-bot.png', 'schematic': 'ledmeteran-sch.png' }
+                images: { '3d': 'ledmeteran-3d.png', 'top': 'ledmeteran-top.png', 'bottom': null, 'schematic': 'ledmeteran-sch.png' }
             }
         };
 
@@ -356,7 +356,7 @@
                     materials.materials[key].side = THREE.DoubleSide;
                 }
 
-                loadText.innerText = "Memuat Bentuk 3D...";
+                loadText.innerText = "Memuat Bentuk 3D (7MB)...";
                 
                 // 2. MEMUAT FILE .OBJ DENGAN WARNA YANG SUDAH DIDAPAT
                 const objLoader = new THREE.OBJLoader();
@@ -394,8 +394,42 @@
                 });
 
             }, undefined, function (err) {
-                console.log("File MTL tidak ditemukan, beralih ke warna polos.");
-                generateDummyBoard(colorHex);
+                console.log("Peringatan: File MTL tidak ditemukan/error. Memaksa memuat file OBJ saja.");
+                loadText.innerText = "Material Hilang. Memaksa Muat 3D...";
+                
+                // 3. JARING PENGAMAN: Jika MTL gagal, TETAP muat OBJ dengan warna solid!
+                const objLoader = new THREE.OBJLoader();
+                objLoader.load(project.model3D.obj, function (object) {
+                    const defaultMat = new THREE.MeshLambertMaterial({ color: colorHex, side: THREE.DoubleSide });
+                    object.traverse(function(child) {
+                        if (child.isMesh) child.material = defaultMat;
+                    });
+                    
+                    const box = new THREE.Box3().setFromObject(object);
+                    if (box.isEmpty()) { generateDummyBoard(colorHex); return; }
+
+                    const size = new THREE.Vector3();
+                    box.getSize(size);
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    if (maxDim > 0 && maxDim !== Infinity) {
+                        const scale = 18 / maxDim; 
+                        object.scale.set(scale, scale, scale);
+                    }
+
+                    object.updateMatrixWorld();
+                    const box2 = new THREE.Box3().setFromObject(object);
+                    const center = new THREE.Vector3();
+                    box2.getCenter(center);
+                    object.position.set(-center.x, -center.y, -center.z);
+
+                    const pivot = new THREE.Group();
+                    pivot.add(object);
+                    boardGroup.add(pivot);
+                    boardGroup.rotation.set(Math.PI/4, Math.PI/6, 0); 
+                    overlay.classList.remove('active');
+                }, undefined, function() {
+                    generateDummyBoard(colorHex);
+                });
             });
         }
 
@@ -433,6 +467,11 @@
             document.getElementById('feat-desc').innerText = data.desc; document.getElementById('spec-layers').innerText = data.layers;
             document.getElementById('spec-finish').innerText = data.finish; document.getElementById('spec-trace').innerText = data.trace;
             document.getElementById('spec-software').innerText = data.software;
+            
+            // Logika menyembunyikan tombol secara otomatis jika tidak ada fotonya
+            document.getElementById('btn-top').style.display = data.images.top ? '' : 'none';
+            document.getElementById('btn-bottom').style.display = data.images.bottom ? '' : 'none';
+            
             document.getElementById('pcb-showcase').scrollIntoView({ behavior: 'smooth', block: 'start' });
             changeView('3d');
         }
