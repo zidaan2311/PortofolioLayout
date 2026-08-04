@@ -114,8 +114,8 @@
                             <img id="board-image" src="" alt="PCB View" class="w-full object-contain max-h-[600px] fade-img absolute inset-0 m-auto z-20 hidden bg-[#111]">
                             
                             <div id="loading-overlay" class="items-center">
-                                <i class="fas fa-circle-notch fa-spin text-4xl mb-4"></i>
-                                <span id="loading-text" class="text-center bg-black/50 px-4 py-2 rounded-lg mt-2">Menyiapkan 3D...</span>
+                                <i id="loading-icon" class="fas fa-circle-notch fa-spin text-4xl mb-4"></i>
+                                <span id="loading-text" class="text-center bg-black/50 px-4 py-2 rounded-lg mt-2 font-bold">Menyiapkan 3D...</span>
                             </div>
                         </div>
 
@@ -289,12 +289,14 @@
             boardGroup = new THREE.Group();
             scene.add(boardGroup);
 
-            window.addEventListener('resize', () => {
+            // SOLUSI: Menggunakan ResizeObserver agar 3D mendeteksi perubahan ukuran layar dari Tailwind
+            const resizeObserver = new ResizeObserver(() => {
                 if (!container.clientWidth || !container.clientHeight) return;
                 camera.aspect = container.clientWidth / container.clientHeight;
                 camera.updateProjectionMatrix();
                 renderer.setSize(container.clientWidth, container.clientHeight);
             });
+            resizeObserver.observe(container);
 
             is3DInitialized = true;
             animate3D();
@@ -335,6 +337,7 @@
             const project = projectsData[projectId];
             const overlay = document.getElementById('loading-overlay');
             const loadText = document.getElementById('loading-text');
+            const loadIcon = document.getElementById('loading-icon');
 
             if (!project.model3D || !project.model3D.obj) {
                 generateDummyBoard(colorHex);
@@ -342,7 +345,9 @@
             }
 
             overlay.classList.add('active');
-            loadText.innerText = "Mengecek Server...";
+            overlay.style.backgroundColor = 'rgba(17, 17, 17, 0.9)';
+            loadIcon.className = "fas fa-circle-notch fa-spin text-4xl mb-4 text-copper";
+            loadText.innerHTML = "Mengecek Server...";
 
             fetch(project.model3D.obj)
             .then(res => {
@@ -352,22 +357,26 @@
             .then(text => {
                 if (text.includes("<!DOCTYPE html>")) throw new Error("URL salah, mengembalikan halaman HTML");
                 
-                loadText.innerText = "Merender OBJ...";
+                loadText.innerHTML = "Merender OBJ...";
                 
                 const objLoader = new THREE.OBJLoader();
                 const object = objLoader.parse(text);
                 
-                // SOLUSI: Memaksa kedua sisi (luar dan dalam) untuk dirender agar tidak tembus pandang
                 const defaultMat = new THREE.MeshLambertMaterial({ 
                     color: colorHex, 
                     side: THREE.DoubleSide
                 });
                 
+                let hasMesh = false;
                 object.traverse(function(child) {
                     if (child.isMesh) {
                         child.material = defaultMat;
+                        hasMesh = true;
                     }
                 });
+
+                // Deteksi Error jika file Export EasyEDA kosong melompong
+                if (!hasMesh) throw new Error("File OBJ dari EasyEDA KOSONG / Tidak Valid.");
 
                 const box = new THREE.Box3().setFromObject(object);
                 const size = new THREE.Vector3();
@@ -394,8 +403,16 @@
                 overlay.classList.remove('active');
             })
             .catch(err => {
-                console.log("Fallback 3D aktif:", err.message);
-                generateDummyBoard(colorHex);
+                console.log("Memuat Cadangan 3D karena:", err.message);
+                
+                // Menampilkan error sebentar ke layar agar ketahuan penyebabnya
+                overlay.style.backgroundColor = 'rgba(100, 0, 0, 0.9)';
+                loadIcon.className = "fas fa-exclamation-circle text-4xl mb-4 text-red-400";
+                loadText.innerHTML = "Error: " + err.message + "<br><span class='text-sm font-normal'>Memuat papan 3D simulasi...</span>";
+                
+                setTimeout(() => {
+                    generateDummyBoard(colorHex);
+                }, 2000); // Tahan pesan error 2 detik lalu munculkan 3D hijau
             });
         }
 
@@ -437,7 +454,20 @@
             changeView('3d');
         }
 
-        window.onload = () => selectBoard('pemanas');
+        window.onload = () => {
+            // DETEKSI OTOMATIS: Jika Three.js mati diblokir browser
+            if (typeof THREE === 'undefined') {
+                const overlay = document.getElementById('loading-overlay');
+                const text = document.getElementById('loading-text');
+                const icon = document.getElementById('loading-icon');
+                overlay.classList.add('active');
+                overlay.style.backgroundColor = 'rgba(100, 0, 0, 0.9)';
+                icon.className = "fas fa-shield-alt text-4xl mb-4 text-red-500";
+                text.innerHTML = "⚠️ SCRIPT DIBLOKIR BROWSER!<br><span class='text-sm font-normal'>Brave/Chrome memblokir pustaka 3D. Matikan Shields untuk melihat 3D.</span>";
+                return; // Hentikan eksekusi web agar tidak blank
+            }
+            selectBoard('pemanas');
+        };
     </script>
 </body>
 </html>
