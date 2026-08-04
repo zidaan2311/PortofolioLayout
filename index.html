@@ -367,18 +367,18 @@
                     side: THREE.DoubleSide
                 });
                 
-                let hasMesh = false;
+                // Cek apakah file memiliki Mesh (Bentuk 3D)
+                const box = new THREE.Box3().setFromObject(object);
+                if (box.isEmpty()) {
+                    throw new Error("File OBJ dari EasyEDA KOSONG / Tidak Valid.");
+                }
+
                 object.traverse(function(child) {
                     if (child.isMesh) {
                         child.material = defaultMat;
-                        hasMesh = true;
                     }
                 });
 
-                // Deteksi Error jika file Export EasyEDA kosong melompong
-                if (!hasMesh) throw new Error("File OBJ dari EasyEDA KOSONG / Tidak Valid.");
-
-                const box = new THREE.Box3().setFromObject(object);
                 const size = new THREE.Vector3();
                 box.getSize(size);
                 
